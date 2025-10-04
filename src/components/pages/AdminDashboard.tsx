@@ -14,13 +14,14 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell
 } from 'recharts';
-import {
+import { 
   LayoutDashboard, FileText, Users, Settings, LogOut, Plus, Edit, Trash2,
   Eye, Save, Upload, Calendar, Tag, Globe, TrendingUp, BarChart3,
-  PieChart as PieChartIcon, Activity, Menu, X, BookOpenCheck, Home
+  PieChart as PieChartIcon, Activity, Menu, X, BookOpenCheck, Home, Play
 } from 'lucide-react';
 import { useContent, ArticleItem, EPaperItem } from '../../store/contentStore';
 import { HomePageEditor } from './HomePageEditor';
+import YouTubeVideosEditor from './YouTubeVideosEditor.tsx';
 
 // Lightweight toast shim to avoid type import issues
 const toast = {
@@ -198,6 +199,7 @@ export function AdminDashboard() {
     { id: 'editor', label: 'Editor', icon: Edit },
     { id: 'breaking', label: 'Breaking', icon: Activity },
     { id: 'epaper', label: 'E-Paper', icon: BookOpenCheck },
+    ...(currentUser?.role === 'admin' || currentUser?.role === 'editor' ? [{ id: 'youtube', label: 'Video News', icon: Play }] : []),
     ...(currentUser?.role === 'admin' ? [{ id: 'users', label: 'Users', icon: Users }] : []),
     { id: 'settings', label: 'Settings', icon: Settings }
   ];
@@ -878,6 +880,12 @@ export function AdminDashboard() {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            {(currentUser?.role === 'admin' || currentUser?.role === 'editor') && (
+              <TabsContent value="youtube" className="space-y-4">
+                <YouTubeVideosEditor />
+              </TabsContent>
+            )}
 
             {currentUser?.role === 'admin' && (
               <TabsContent value="users" className="space-y-4">

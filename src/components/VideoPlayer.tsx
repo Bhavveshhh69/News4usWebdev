@@ -281,6 +281,13 @@ export function VideoThumbnail({
           alt={title}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           style={{ aspectRatio: '16/9' }}
+          onError={(e) => {
+            const target = e.currentTarget as HTMLImageElement;
+            if (!target.dataset.fallback) {
+              target.dataset.fallback = '1';
+              target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+            }
+          }}
         />
         
         {/* Play button overlay */}

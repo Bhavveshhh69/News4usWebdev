@@ -2,72 +2,23 @@ import React, { useState } from 'react';
 import { VideoPlayer, VideoThumbnail } from './VideoPlayer';
 import { VideoShare } from './SocialShare';
 import { Play } from 'lucide-react';
+import { useContent } from '../store/contentStore';
+import { extractYouTubeId } from '../utils/youtube';
 
 export function VideoNews() {
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
+  const { youtubeVideos } = useContent() as any;
 
-  const videoNews = [
-    {
-      id: 1,
-      title: "Breaking: Global Climate Summit Reaches Historic Agreement",
-      videoId: "dQw4w9WgXcQ", // Demo YouTube video ID
-      duration: "12:34",
-      views: "2.3M",
-      source: "NEWS4US",
-      timeAgo: "2 hours ago",
-      isLive: false
-    },
-    {
-      id: 2,
-      title: "LIVE: Tech Market Analysis - AI Stocks Surge",
-      videoId: "dQw4w9WgXcQ", // Demo YouTube video ID
-      duration: "",
-      views: "1.8M",
-      source: "Market Watch",
-      timeAgo: "streaming now",
-      isLive: true
-    },
-    {
-      id: 3,
-      title: "Healthcare Breakthrough: New Cancer Treatment",
-      videoId: "dQw4w9WgXcQ", // Demo YouTube video ID
-      duration: "15:20",
-      views: "987K",
-      source: "Health Today",
-      timeAgo: "6 hours ago",
-      isLive: false
-    },
-    {
-      id: 4,
-      title: "Championship Final Highlights",
-      videoId: "dQw4w9WgXcQ", // Demo YouTube video ID
-      duration: "22:15",
-      views: "5.2M",
-      source: "Sports Central",
-      timeAgo: "1 day ago",
-      isLive: false
-    },
-    {
-      id: 5,
-      title: "Celebrity Award Show Behind The Scenes",
-      videoId: "dQw4w9WgXcQ", // Demo YouTube video ID
-      duration: "18:32",
-      views: "3.7M",
-      source: "Entertainment Weekly",
-      timeAgo: "1 day ago",
-      isLive: false
-    },
-    {
-      id: 6,
-      title: "Political Debate Analysis",
-      videoId: "dQw4w9WgXcQ", // Demo YouTube video ID
-      duration: "25:45",
-      views: "1.2M",
-      source: "Political Insider",
-      timeAgo: "2 days ago",
-      isLive: false
-    }
-  ];
+  const videoNews = (youtubeVideos || []).map((v: any, idx: number) => ({
+    id: v.id || idx,
+    title: v.title,
+    videoId: extractYouTubeId(v.videoUrl || ''),
+    duration: '',
+    views: '1.2M',
+    source: 'NEWS4US',
+    timeAgo: 'Recently added',
+    isLive: String(v.title || '').toLowerCase().includes('live')
+  }));
 
   const openVideo = (video: any) => {
     setSelectedVideo(video);

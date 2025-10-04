@@ -60,7 +60,7 @@ export default defineConfig({
     // Proxy API requests to the backend server
     proxy: {
       '/api': {
-        target: 'http://localhost:4000',
+        target: 'http://localhost:4002',
         changeOrigin: true,
         secure: false,
       },

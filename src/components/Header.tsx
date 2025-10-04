@@ -4,7 +4,7 @@ import { Menu, X, Moon, Sun, Newspaper } from 'lucide-react';
 import { Link, useRouter } from './Router';
 const RLink: any = Link;
 
-// Define logo paths as constants to make them easier to change
+// Primary: use bundler-managed asset URLs so Vite includes them in the build
 const LOGO_PATH = '../assets/Newlogo.jpeg';
 const BRAND_IMAGE_PATH = '../assets/e465bbd90453757b67bdbd6f68b53e083c3b6284.png';
 
@@ -58,7 +58,7 @@ export function Header({ isDarkMode, toggleDarkMode, showThemeToggle = false }: 
             <img 
               src={logoSrc} 
               alt="NEWS4US Official Logo" 
-              onError={() => { if (logoSrc !== '/news-logo.jpg') setLogoSrc('/news-logo.jpg'); }}
+              onError={() => { if (logoSrc !== '/assets/Newlogo.jpeg') setLogoSrc('/assets/Newlogo.jpeg'); }}
               className="h-12 sm:h-14 md:h-16 lg:h-20 xl:h-24 w-auto object-contain shrink-0"
             />
             <RLink to="/">

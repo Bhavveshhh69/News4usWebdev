@@ -25,6 +25,13 @@ export interface HomePageContent {
   entertainmentSectionTitle: string;
 }
 
+export interface YouTubeVideo {
+  id: string;
+  title: string;
+  videoUrl: string;
+  isMiniPlayer?: boolean;
+}
+
 export interface ArticleItem {
   id: string;
   title: string;
@@ -47,6 +54,8 @@ interface ContentContextValue {
   categories: string[];
   tags: string[];
   epapers: EPaperItem[];
+  youtubeVideos: YouTubeVideo[];
+  miniPlayerEnabled: boolean;
   breakingItems: string[];
   breakingSpeedMs: number;
   breakingPauseOnHover: boolean;
@@ -57,6 +66,12 @@ interface ContentContextValue {
   addTag: (t: string) => void;
   addEPaper: (epaper: EPaperItem) => void;
   deleteEPaper: (id: string) => void;
+  addYouTubeVideo: (video: YouTubeVideo) => void;
+  updateYouTubeVideo: (video: YouTubeVideo) => void;
+  deleteYouTubeVideo: (id: string) => void;
+  setMiniPlayerVideo: (id: string) => void;
+  clearMiniPlayerVideo: () => void;
+  setMiniPlayerEnabled: (enabled: boolean) => void;
   setBreakingItems: (items: string[]) => void;
   addBreakingItem: (text: string) => void;
   removeBreakingItem: (index: number) => void;
@@ -166,6 +181,12 @@ const seedArticles: ArticleItem[] = [
   },
 ];
 
+const seedYouTubeVideos: YouTubeVideo[] = [
+  { id: 'yt-1', title: 'Breaking: Global Climate Summit Reaches Historic Agreement', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
+  { id: 'yt-2', title: 'LIVE: Tech Market Analysis - AI Stocks Surge', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
+  { id: 'yt-3', title: 'Healthcare Breakthrough: New Cancer Treatment', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' }
+];
+
 const STORAGE_KEY = 'contentStore_v1';
 
 const ContentContext = createContext(null as any);
@@ -174,6 +195,8 @@ export function ContentProvider({ children }: { children?: any }) {
   const [articles, setArticles] = useState([] as ArticleItem[]);
   const [tags, setTags] = useState(defaultTags as string[]);
   const [epapers, setEPapers] = useState(seedEPapers as EPaperItem[]);
+  const [youtubeVideos, setYouTubeVideos] = useState(seedYouTubeVideos as YouTubeVideo[]);
+  const [miniPlayerEnabled, setMiniPlayerEnabledState] = useState(true);
   const [breakingItems, setBreakingItemsState] = useState(defaultBreaking as string[]);
   const [breakingSpeedMs, setBreakingSpeedMs] = useState(22000);
   const [breakingPauseOnHover, setBreakingPauseOnHover] = useState(true);
@@ -187,6 +210,8 @@ export function ContentProvider({ children }: { children?: any }) {
         setArticles(parsed.articles || seedArticles);
         setTags(parsed.tags || defaultTags);
         setEPapers(parsed.epapers || seedEPapers);
+        setYouTubeVideos(parsed.youtubeVideos || seedYouTubeVideos);
+        setMiniPlayerEnabledState(parsed.miniPlayerEnabled ?? true);
         setBreakingItemsState(parsed.breakingItems || defaultBreaking);
         setBreakingSpeedMs(parsed.breakingSpeedMs || 22000);
         setBreakingPauseOnHover(parsed.breakingPauseOnHover ?? true);
@@ -195,12 +220,16 @@ export function ContentProvider({ children }: { children?: any }) {
         setArticles(seedArticles);
         setTags(defaultTags);
         setEPapers(seedEPapers);
+        setYouTubeVideos(seedYouTubeVideos);
+        setMiniPlayerEnabledState(true);
         setHomePageContentState(defaultHomePageContent);
       }
     } catch {
       setArticles(seedArticles);
       setTags(defaultTags);
       setEPapers(seedEPapers);
+      setYouTubeVideos(seedYouTubeVideos);
+      setMiniPlayerEnabledState(true);
       setHomePageContentState(defaultHomePageContent);
     }
   }, []);
@@ -211,6 +240,8 @@ export function ContentProvider({ children }: { children?: any }) {
         articles, 
         tags, 
         // NOTE: We intentionally do NOT persist `epapers` here to avoid localStorage quota errors
+        youtubeVideos,
+        miniPlayerEnabled,
         breakingItems, 
         breakingSpeedMs, 
         breakingPauseOnHover,
@@ -224,7 +255,7 @@ export function ContentProvider({ children }: { children?: any }) {
       // Avoid crashing the app if localStorage quota is exceeded
       console.warn('Failed to persist content store to localStorage:', err);
     }
-  }, [articles, tags, breakingItems, breakingSpeedMs, breakingPauseOnHover, homePageContent]);
+  }, [articles, tags, youtubeVideos, miniPlayerEnabled, breakingItems, breakingSpeedMs, breakingPauseOnHover, homePageContent]);
 
   const setBreakingItems = (items: string[]) => {
     setBreakingItemsState(items);
@@ -284,12 +315,38 @@ export function ContentProvider({ children }: { children?: any }) {
     setEPapers(epapers.filter(e => e.id !== id));
   };
 
+  const addYouTubeVideo = (video: YouTubeVideo) => {
+    setYouTubeVideos([...youtubeVideos, video]);
+  };
+
+  const updateYouTubeVideo = (video: YouTubeVideo) => {
+    setYouTubeVideos(youtubeVideos.map(v => v.id === video.id ? video : v));
+  };
+
+  const deleteYouTubeVideo = (id: string) => {
+    setYouTubeVideos(youtubeVideos.filter(v => v.id !== id));
+  };
+
+  const setMiniPlayerVideo = (id: string) => {
+    setYouTubeVideos(youtubeVideos.map(v => ({ ...v, isMiniPlayer: v.id === id })));
+  };
+
+  const clearMiniPlayerVideo = () => {
+    setYouTubeVideos(youtubeVideos.map(v => ({ ...v, isMiniPlayer: false })));
+  };
+
+  const setMiniPlayerEnabled = (enabled: boolean) => {
+    setMiniPlayerEnabledState(enabled);
+  };
+
   return (
     <ContentContext.Provider value={{
       articles,
       categories: defaultCategories,
       tags,
       epapers,
+      youtubeVideos,
+      miniPlayerEnabled,
       breakingItems,
       breakingSpeedMs,
       breakingPauseOnHover,
@@ -300,6 +357,12 @@ export function ContentProvider({ children }: { children?: any }) {
       addTag,
       addEPaper,
       deleteEPaper,
+      addYouTubeVideo,
+      updateYouTubeVideo,
+      deleteYouTubeVideo,
+      setMiniPlayerVideo,
+      clearMiniPlayerVideo,
+      setMiniPlayerEnabled,
       setBreakingItems,
       addBreakingItem,
       removeBreakingItem,

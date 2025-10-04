@@ -1,13 +1,22 @@
 import React, { useState } from 'react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { X, Maximize2, Minimize2 } from 'lucide-react';
+import { X, Maximize2, Minimize2, Play } from 'lucide-react';
 import { Button } from "./ui/button";
+import { useContent } from '../store/contentStore';
+import { extractYouTubeId } from '../utils/youtube';
 
 export function LiveVideoFloat() {
+  const { youtubeVideos, miniPlayerEnabled } = useContent() as any;
   const [isVisible, setIsVisible] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
 
-  if (!isVisible) return null;
+  const miniPlayerVideo = (youtubeVideos && youtubeVideos.length > 0)
+    ? (youtubeVideos.find((v: any) => v.isMiniPlayer) || youtubeVideos[0])
+    : null;
+  if (!miniPlayerEnabled || !isVisible || !miniPlayerVideo) return null;
+
+  const videoId = extractYouTubeId(miniPlayerVideo.videoUrl || '');
 
   return (
     <div className={`fixed bottom-4 right-4 z-50 transition-all duration-300 ${
@@ -44,11 +53,31 @@ export function LiveVideoFloat() {
 
         {/* Video Content */}
         <div className="relative w-full h-full">
-          <ImageWithFallback
-            src="https://images.unsplash.com/photo-1650984661525-7e6b1b874e47?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxicmVha2luZyUyMG5ld3MlMjBuZXdzcm9vbXxlbnwxfHx8fDE3NTgwMTA4Nzd8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-            alt="Live News Stream"
-            className="w-full h-full object-cover"
-          />
+          {showVideo ? (
+            <iframe
+              src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&rel=0&playsinline=1`}
+              title={miniPlayerVideo.title}
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+              allowFullScreen
+            />
+          ) : (
+            <>
+              <ImageWithFallback
+                src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+                alt={miniPlayerVideo.title}
+                className="w-full h-full object-cover"
+              />
+              <div
+                className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer"
+                onClick={() => setShowVideo(true)}
+              >
+                <div className="bg-red-600 rounded-full p-3">
+                  <Play className="w-6 h-6 text-white ml-1" />
+                </div>
+              </div>
+            </>
+          )}
           
           {/* Video overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
@@ -56,7 +85,7 @@ export function LiveVideoFloat() {
           {/* Video info */}
           <div className="absolute bottom-2 left-2 right-2">
             <h4 className="text-white text-sm font-medium line-clamp-2">
-              Breaking: Global Climate Summit Live Coverage
+              {miniPlayerVideo.title}
             </h4>
           </div>
         </div>
