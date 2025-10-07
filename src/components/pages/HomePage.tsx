@@ -69,7 +69,7 @@ export function HomePage({ isDarkMode, isQuickRead, setIsQuickRead }: HomePagePr
           className={`${isQuickRead ? 'bg-red-600 hover:bg-red-700 text-white' : 'hover:bg-red-50 dark:hover:bg-red-900/20'}`}
         >
           <FileText className="w-4 h-4 mr-2" />
-          {isQuickRead ? 'Exit Quick Read Mode' : homePageContent.quickReadButtonText}
+          {isQuickRead ? 'Exit Quick Read Mode' : (homePageContent.quickReadButtonText || 'Quick Read Mode')}
         </Button>
       </div>
 
@@ -88,7 +88,7 @@ export function HomePage({ isDarkMode, isQuickRead, setIsQuickRead }: HomePagePr
             
             <ScrollReveal>
               <CategorySection
-              title={homePageContent.politicsSectionTitle}
+              title={homePageContent.politicsSectionTitle || 'Politics'}
               highlightColor="red"
               articles={politicsArticles}
               isQuickRead={isQuickRead}
@@ -97,7 +97,7 @@ export function HomePage({ isDarkMode, isQuickRead, setIsQuickRead }: HomePagePr
             
             <ScrollReveal delayMs={100}>
               <CategorySection
-              title={homePageContent.healthSectionTitle}
+              title={homePageContent.healthSectionTitle || 'Health'}
               highlightColor="teal"
               articles={healthArticles}
               isQuickRead={isQuickRead}
@@ -106,7 +106,7 @@ export function HomePage({ isDarkMode, isQuickRead, setIsQuickRead }: HomePagePr
             
             <ScrollReveal delayMs={150}>
               <CategorySection
-              title={homePageContent.sportsSectionTitle}
+              title={homePageContent.sportsSectionTitle || 'Sports'}
               highlightColor="green"
               articles={sportsArticles}
               isQuickRead={isQuickRead}
@@ -115,7 +115,7 @@ export function HomePage({ isDarkMode, isQuickRead, setIsQuickRead }: HomePagePr
             
             <ScrollReveal delayMs={200}>
               <CategorySection
-              title={homePageContent.entertainmentSectionTitle}
+              title={homePageContent.entertainmentSectionTitle || 'Entertainment'}
               highlightColor="purple"
               articles={entertainmentArticles}
               isQuickRead={isQuickRead}

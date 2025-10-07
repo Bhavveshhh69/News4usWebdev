@@ -123,19 +123,31 @@ export function AdminDashboard() {
     setActiveTab('editor');
   };
 
+  // Helper function to ensure placements object exists
+  const ensurePlacements = (article: ArticleItem | null): ArticleItem | null => {
+    if (!article) return article;
+    return {
+      ...article,
+      placements: article.placements || { homeHero: false, homeSection: 'none', categorySpot: 'none' }
+    } as ArticleItem;
+  };
+
   const handleSaveArticle = () => {
     if (!editingArticle) return;
 
+    // Ensure placements object exists before saving
+    const articleToSave = ensurePlacements(editingArticle) || editingArticle;
+
     if (isCreating) {
       const newArticle = {
-        ...editingArticle,
+        ...articleToSave,
         id: Date.now().toString(),
-        slug: (editingArticle.slug || editingArticle.title).toLowerCase().replace(/\s+/g, '-')
+        slug: (articleToSave.slug || articleToSave.title || '').toLowerCase().replace(/\s+/g, '-')
       } as ArticleItem;
       addArticle(newArticle);
       toast.success('Article created successfully');
     } else {
-      updateArticle(editingArticle);
+      updateArticle(articleToSave);
       toast.success('Article updated successfully');
     }
 
@@ -486,7 +498,7 @@ export function AdminDashboard() {
                                   size="sm"
                                   variant="ghost"
                                   onClick={() => {
-                                    setEditingArticle(article as any);
+                                    setEditingArticle(ensurePlacements(article as any));
                                     setIsCreating(false);
                                     // setActiveTab('editor'); // Removed tab navigation
                                   }}
@@ -685,15 +697,27 @@ export function AdminDashboard() {
                           <Label htmlFor="homeHero">Home Hero</Label>
                           <Switch
                             id="homeHero"
-                            checked={editingArticle?.placements.homeHero || false}
-                            onCheckedChange={(checked) => setEditingArticle({ ...editingArticle, placements: { ...editingArticle.placements, homeHero: checked } })}
+                            checked={editingArticle?.placements?.homeHero || false}
+                            onCheckedChange={(checked) => setEditingArticle({ 
+                              ...editingArticle, 
+                              placements: { 
+                                ...(editingArticle?.placements || {}), 
+                                homeHero: checked 
+                              } 
+                            })}
                           />
                         </div>
                         <div className="flex items-center space-x-2">
                           <Label htmlFor="homeSection">Home Section</Label>
                           <Select
-                            value={editingArticle?.placements.homeSection || 'none'}
-                            onValueChange={(value) => setEditingArticle({ ...editingArticle, placements: { ...editingArticle.placements, homeSection: value } })}
+                            value={editingArticle?.placements?.homeSection || 'none'}
+                            onValueChange={(value) => setEditingArticle({ 
+                              ...editingArticle, 
+                              placements: { 
+                                ...(editingArticle?.placements || {}), 
+                                homeSection: value 
+                              } 
+                            })}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Select a section" />
@@ -709,8 +733,14 @@ export function AdminDashboard() {
                         <div className="flex items-center space-x-2">
                           <Label htmlFor="categorySpot">Category Spot</Label>
                           <Select
-                            value={editingArticle?.placements.categorySpot || 'none'}
-                            onValueChange={(value) => setEditingArticle({ ...editingArticle, placements: { ...editingArticle.placements, categorySpot: value } })}
+                            value={editingArticle?.placements?.categorySpot || 'none'}
+                            onValueChange={(value) => setEditingArticle({ 
+                              ...editingArticle, 
+                              placements: { 
+                                ...(editingArticle?.placements || {}), 
+                                categorySpot: value 
+                              } 
+                            })}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Select a spot" />
@@ -779,6 +809,31 @@ export function AdminDashboard() {
                         checked={breakingPauseOnHover}
                         onCheckedChange={setBreakingPause}
                       />
+                    </div>
+                    <div className="flex items-end space-x-2">
+                      {editingTickerIndex === null && newTickerText.trim() !== '' && (
+                        <Button 
+                          onClick={() => {
+                            addBreakingItem(newTickerText);
+                            setNewTickerText('');
+                          }}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Ticker
+                        </Button>
+                      )}
+                      {editingTickerIndex !== null && (
+                        <Button 
+                          onClick={() => {
+                            setEditingTickerIndex(null);
+                            setNewTickerText('');
+                          }}
+                          variant="outline"
+                        >
+                          Cancel
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>

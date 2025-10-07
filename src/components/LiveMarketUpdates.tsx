@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, TrendingUp, TrendingDown, Newspaper } from 'lucide-react';
+import { useContent } from '../store/contentStore';
 
 interface StockData {
   symbol: string;
@@ -13,6 +14,7 @@ export function LiveMarketUpdates() {
   const [marketData, setMarketData] = useState([] as StockData[]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null as string | null);
+  const { articles } = useContent();
 
   useEffect(() => {
     const fetchStockData = async () => {
@@ -42,12 +44,26 @@ export function LiveMarketUpdates() {
     return () => clearInterval(interval);
   }, []);
   
-  const marketNews = [
+  // Get market-related articles from the content store
+  const marketNews = articles
+    .filter(article => 
+      article.category.toLowerCase().includes('business') || 
+      article.tags.some(tag => tag.toLowerCase().includes('market')) ||
+      article.title.toLowerCase().includes('market') ||
+      article.summary.toLowerCase().includes('market')
+    )
+    .slice(0, 4)
+    .map(article => article.title);
+
+  // Fallback market news if no articles are available
+  const fallbackMarketNews = [
     "Inflation concerns weigh on investor sentiment",
     "Tech sector leads market rally on strong earnings",
     "Global supply chain issues continue to impact manufacturing",
     "Healthcare stocks show strong quarterly performance"
   ];
+
+  const displayMarketNews = marketNews.length > 0 ? marketNews : fallbackMarketNews;
 
   return (
     <section className="max-w-7xl mx-auto px-4 py-8">
@@ -120,7 +136,7 @@ export function LiveMarketUpdates() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h3 className="font-bold text-gray-900 dark:text-white mb-4">Market Headlines</h3>
             <div className="space-y-4">
-              {marketNews.map((news, index) => (
+              {displayMarketNews.map((news, index) => (
                 <div key={index} className="flex items-start space-x-3 group cursor-pointer">
                   <div className="w-2 h-2 bg-red-600 rounded-full mt-2 flex-shrink-0"></div>
                   <p className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors leading-relaxed">

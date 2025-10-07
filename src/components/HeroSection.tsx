@@ -1,13 +1,33 @@
 import React from 'react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { NewsCard } from './NewsCard';
+import { useContent } from '../store/contentStore';
 
 interface HeroSectionProps {
   isQuickRead: boolean;
 }
 
 export function HeroSection({ isQuickRead }: HeroSectionProps) {
-  const featuredStory = {
+  const { articles, homePageContent } = useContent();
+  
+  // Get published articles
+  const published = articles.filter(a => (a.status === 'published') || (a.status === 'scheduled' && new Date(a.publishDate).getTime() <= Date.now()));
+  const sorted = [...published].sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime());
+  
+  // Get featured story (first article with homeHero placement or first article)
+  const featuredArticle = sorted.find(a => a.placements?.homeHero) || sorted[0];
+  
+  // Get trending stories (next 3 articles)
+  const trendingArticles = sorted.slice(1, 4);
+
+  // Fallback data if no articles are available
+  const featuredStory = featuredArticle ? {
+    title: featuredArticle.title,
+    summary: featuredArticle.summary,
+    imageUrl: featuredArticle.imageUrl || '',
+    category: featuredArticle.category || 'NEWS',
+    timeAgo: 'Recently published'
+  } : {
     title: "Global Economic Summit Reaches Historic Climate Agreement",
     summary: "World leaders from 195 countries have reached a groundbreaking consensus on climate action and economic recovery, marking a pivotal moment in international cooperation. The agreement includes unprecedented commitments to renewable energy investments and sustainable development goals.",
     imageUrl: "https://images.unsplash.com/photo-1650984661525-7e6b1b874e47?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxicmVha2luZyUyMG5ld3MlMjBuZXdzcm9vbXxlbnwxfHx8fDE3NTgwMTA4Nzd8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
@@ -15,7 +35,13 @@ export function HeroSection({ isQuickRead }: HeroSectionProps) {
     timeAgo: "2 hours ago"
   };
 
-  const trendingStories = [
+  const trendingStories = trendingArticles.length > 0 ? trendingArticles.map(article => ({
+    title: article.title,
+    summary: article.summary,
+    imageUrl: article.imageUrl || '',
+    category: article.category || 'NEWS',
+    timeAgo: 'Recently published'
+  })) : [
     {
       title: "Tech Giants Report Record Q4 Earnings",
       summary: "Major technology companies exceeded expectations with strong quarterly results.",
@@ -91,7 +117,6 @@ export function HeroSection({ isQuickRead }: HeroSectionProps) {
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">Trending Now</h2>
           {trendingStories.map((story, index) => (
             <NewsCard
-              key={index}
               title={story.title}
               summary={story.summary}
               imageUrl={story.imageUrl}

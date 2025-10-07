@@ -10,9 +10,29 @@ import { extractYouTubeId } from '../utils/youtube';
 
 export function Sidebar() {
   const [email, setEmail] = useState('');
-  const { youtubeVideos } = useContent() as any;
+  const { youtubeVideos, articles } = useContent() as any;
 
-  const stockData = [
+  // Get published articles
+  const published = articles.filter(a => (a.status === 'published') || (a.status === 'scheduled' && new Date(a.publishDate).getTime() <= Date.now()));
+  const sorted = [...published].sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime());
+
+  // Get stock-related articles for stock data
+  const stockArticles = articles
+    .filter(article => 
+      article.category.toLowerCase().includes('business') || 
+      article.tags.some(tag => tag.toLowerCase().includes('market')) ||
+      article.title.toLowerCase().includes('market') ||
+      article.summary.toLowerCase().includes('market')
+    )
+    .slice(0, 4);
+
+  // Generate stock data from articles or use fallback
+  const stockData = stockArticles.length > 0 ? stockArticles.map(article => ({
+    symbol: article.category.toUpperCase(),
+    value: 'N/A',
+    change: article.tags.includes('Breaking') ? '+1.2%' : '+0.5%',
+    isPositive: article.tags.includes('Breaking') || article.tags.includes('Positive')
+  })) : [
     { symbol: 'S&P 500', value: '4,234.56', change: '+1.2%', isPositive: true },
     { symbol: 'NASDAQ', value: '13,567.89', change: '+0.8%', isPositive: true },
     { symbol: 'DOW JONES', value: '34,123.45', change: '-0.3%', isPositive: false },
@@ -28,7 +48,13 @@ export function Sidebar() {
     };
   });
 
-  const trendingArticles = [
+  // Get trending articles from the content store
+  const trendingArticles = sorted
+    .slice(0, 5)
+    .map(article => article.title);
+
+  // Fallback trending articles if no articles are available
+  const fallbackTrendingArticles = [
     "Economic reforms reshape global markets",
     "Climate summit reaches historic agreement", 
     "Technology breakthrough in AI research",
@@ -36,7 +62,9 @@ export function Sidebar() {
     "Entertainment industry shows strong recovery"
   ];
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const displayTrendingArticles = trendingArticles.length > 0 ? trendingArticles : fallbackTrendingArticles;
+
+  const handleSubscribe = (e: any) => {
     e.preventDefault();
     if (email) {
       toast.success("Successfully subscribed to news updates!");
@@ -113,7 +141,7 @@ export function Sidebar() {
         <h3 className="font-bold text-gray-900 dark:text-white mb-4">Trending Now</h3>
         
         <div className="space-y-3">
-          {trendingArticles.map((article, index) => (
+          {displayTrendingArticles.map((article, index) => (
             <div key={index} className="flex items-start space-x-3 group cursor-pointer">
               <span className="text-red-600 font-bold text-sm flex-shrink-0 mt-1">
                 {index + 1}
