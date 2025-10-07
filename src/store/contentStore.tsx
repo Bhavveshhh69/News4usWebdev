@@ -182,9 +182,9 @@ const seedArticles: ArticleItem[] = [
 ];
 
 const seedYouTubeVideos: YouTubeVideo[] = [
-  { id: 'yt-1', title: 'Breaking: Global Climate Summit Reaches Historic Agreement', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
-  { id: 'yt-2', title: 'LIVE: Tech Market Analysis - AI Stocks Surge', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
-  { id: 'yt-3', title: 'Healthcare Breakthrough: New Cancer Treatment', videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' }
+  { id: 'yt-1', title: 'Breaking: Global Climate Summit Reaches Historic Agreement', videoUrl: 'https://www.youtube.com/watch?v=jNQXAC9IVRw', isMiniPlayer: true },
+  { id: 'yt-2', title: 'LIVE: Tech Market Analysis - AI Stocks Surge', videoUrl: 'https://www.youtube.com/watch?v=9bZkp7q19f0' },
+  { id: 'yt-3', title: 'Healthcare Breakthrough: New Cancer Treatment', videoUrl: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ' }
 ];
 
 const STORAGE_KEY = 'contentStore_v1';

@@ -38,15 +38,6 @@ export function VideoPlayer({
       className={`relative bg-black rounded-lg overflow-hidden ${className}`}
       style={{ aspectRatio: '16/9' }}
     >
-      {isLive && (
-        <div className="absolute top-3 left-3 z-20">
-          <div className="bg-red-600 text-white px-2 py-1 rounded-md text-xs font-bold flex items-center space-x-1">
-            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <span>LIVE</span>
-          </div>
-        </div>
-      )}
-
       <iframe
         src={embedUrl}
         title={title}
@@ -55,12 +46,21 @@ export function VideoPlayer({
         allowFullScreen
       />
 
+      {isLive && (
+        <div className="absolute top-3 left-3 z-20 pointer-events-none">
+          <div className="bg-red-600 text-white px-2 py-1 rounded-md text-xs font-bold flex items-center space-x-1">
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <span>LIVE</span>
+          </div>
+        </div>
+      )}
+
       <div className="absolute top-3 right-3 z-20">
         <Button
           variant="ghost"
           size="sm"
           onClick={openYouTube}
-          className="bg-black/50 text-white hover:bg-black/70 p-2"
+          className="bg-black/50 text-white hover:bg-black/70 p-2 pointer-events-auto"
           title="Open in YouTube"
         >
           <ExternalLink className="w-4 h-4" />
