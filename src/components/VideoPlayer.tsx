@@ -26,7 +26,7 @@ export function VideoPlayer({
 }: VideoPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=${autoPlay ? 1 : 0}&controls=1&rel=0&modestbranding=1`;
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=${autoPlay ? 1 : 0}&rel=0&modestbranding=1&origin=${window.location.origin}`;
 
   const openYouTube = () => {
     window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
@@ -41,9 +41,10 @@ export function VideoPlayer({
       <iframe
         src={embedUrl}
         title={title}
-        className="w-full h-full"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+        className="w-full h-full border-0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
+        sandbox="allow-scripts allow-same-origin allow-presentation"
       />
 
       {isLive && (
