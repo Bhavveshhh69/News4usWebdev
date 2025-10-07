@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import { X, ExternalLink } from 'lucide-react';
+import { X, ExternalLink, Play } from 'lucide-react';
 
 interface VideoPlayerProps {
   videoId: string;
