@@ -187,7 +187,7 @@ export function AboutPage() {
       </div>
 
       {/* Contact Information */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Get In Touch</h2>
         <div className="text-center">
           <div className="mb-4">
@@ -202,6 +202,39 @@ export function AboutPage() {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Tech Support</h3>
             <p className="text-gray-600 dark:text-gray-300">9394754329</p>
           </div>
+        </div>
+      </div>
+
+      {/* Social Media Links */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Follow Us</h2>
+        <div className="flex justify-center space-x-8">
+          <a href="http://www.youtube.com/@News4Us" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center">
+            <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/>
+                <path d="m10 15 5-3-5-3z"/>
+              </svg>
+            </div>
+            <span className="text-gray-700 dark:text-gray-300 font-medium">YouTube</span>
+          </a>
+          <a href="https://twitter.com/news_4us" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center">
+            <div className="w-12 h-12 bg-blue-400 rounded-full flex items-center justify-center mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                <path d="M4 4l11.733 16h4.267l-11.733-16z"/>
+                <path d="M4 20l6.768-6.768m2.46-2.46L20 4"/>
+              </svg>
+            </div>
+            <span className="text-gray-700 dark:text-gray-300 font-medium">Twitter</span>
+          </a>
+          <a href="https://www.fb.com/news4us" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center">
+            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+              </svg>
+            </div>
+            <span className="text-gray-700 dark:text-gray-300 font-medium">Facebook</span>
+          </a>
         </div>
       </div>
     </div>
