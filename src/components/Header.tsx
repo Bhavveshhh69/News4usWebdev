@@ -102,6 +102,7 @@ export function Header({ isDarkMode, toggleDarkMode, showThemeToggle = false }: 
               <img 
                 src={brandImage} 
                 alt="NEWS4US Brand Image" 
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/assets/e465bbd90453757b67bdbd6f68b53e083c3b6284.png'; }}
                 className="h-14 xl:h-16 w-auto object-contain"
               />
             </div>

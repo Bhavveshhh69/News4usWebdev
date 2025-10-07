@@ -1,7 +1,7 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import { X, ExternalLink, Play } from 'lucide-react';
+import { X, ExternalLink, Play, Pause, Volume2, VolumeX, Maximize, Minimize } from 'lucide-react';
 
 interface VideoPlayerProps {
   videoId: string;
@@ -24,9 +24,61 @@ export function VideoPlayer({
   onClose,
   className = ""
 }: VideoPlayerProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isPlaying, setIsPlaying] = useState(autoPlay);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPiP, setIsPiP] = useState(false);
+  const [showControls, setShowControls] = useState(false);
 
-  const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=${autoPlay ? 1 : 0}&rel=0&modestbranding=1&origin=${window.location.origin}`;
+  // YouTube embed URL with improved parameters
+  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=${autoPlay ? 1 : 0}&mute=${isMuted ? 1 : 0}&controls=1&rel=0&playsinline=1&enablejsapi=1&origin=${window.location.origin}&widget_referrer=${window.location.origin}&modestbranding=1`;
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (containerRef.current) {
+      if (!isFullscreen) {
+        containerRef.current.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+      setIsFullscreen(!isFullscreen);
+    }
+  };
+
+  const togglePiP = async () => {
+    if (videoRef.current) {
+      try {
+        if (!isPiP) {
+          await videoRef.current.requestPictureInPicture();
+          setIsPiP(true);
+        } else {
+          document.exitPictureInPicture();
+          setIsPiP(false);
+        }
+      } catch (error) {
+        console.log('PiP not supported or failed:', error);
+      }
+    }
+  };
 
   const openYouTube = () => {
     window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
@@ -35,17 +87,106 @@ export function VideoPlayer({
   const VideoContent = () => (
     <div
       ref={containerRef}
-      className={`relative bg-black rounded-lg overflow-hidden ${className}`}
-      style={{ aspectRatio: '16/9' }}
+      className={`relative bg-black rounded-lg overflow-hidden group ${className}`}
+      style={{ aspectRatio: '16/9', width: '100%', height: '100%' }}
+      onMouseEnter={() => setShowControls(true)}
+      onMouseLeave={() => setShowControls(false)}
     >
+      {/* YouTube iframe - primary video display */}
       <iframe
         src={embedUrl}
         title={title}
-        className="w-full h-full border-0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        className="w-full h-full relative z-0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
         allowFullScreen
-        sandbox="allow-scripts allow-same-origin allow-presentation"
+        style={{ width: '100%', height: '100%', minHeight: '200px', position: 'relative', zIndex: 0 }}
       />
+
+      {/* Custom overlay controls */}
+      <div
+        className={`absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center ${
+          showControls ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        <div className="flex items-center space-x-4">
+          {/* Play button overlay */}
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={togglePlay}
+            className="bg-black bg-opacity-50 hover:bg-opacity-70 text-white p-4 rounded-full"
+          >
+            {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
+          </Button>
+        </div>
+      </div>
+
+      {/* Bottom controls bar */}
+      <div
+        className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4 transition-all duration-300 ${
+          showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={togglePlay}
+              className="text-white hover:bg-white hover:bg-opacity-20 p-2"
+            >
+              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleMute}
+              className="text-white hover:bg-white hover:bg-opacity-20 p-2"
+            >
+              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </Button>
+
+            <span className="text-white text-sm font-medium truncate max-w-40">
+              {title}
+            </span>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            {/* Picture-in-Picture */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={togglePiP}
+              className="text-white hover:bg-white hover:bg-opacity-20 p-2"
+              title="Picture-in-Picture"
+            >
+              {isPiP ? <Minimize className="w-4 h-4" /> : <ExternalLink className="w-4 h-4" />}
+            </Button>
+
+            {/* Open in YouTube */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={openYouTube}
+              className="text-white hover:bg-white hover:bg-opacity-20 p-2"
+              title="Open in YouTube"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </Button>
+
+            {/* Fullscreen */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleFullscreen}
+              className="text-white hover:bg-white hover:bg-opacity-20 p-2"
+            >
+              {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {isLive && (
         <div className="absolute top-3 left-3 z-20 pointer-events-none">
