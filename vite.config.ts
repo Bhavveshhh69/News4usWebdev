@@ -50,6 +50,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  base: './', // Add this line for relative asset paths
   build: {
     target: 'esnext',
     outDir: 'dist',
