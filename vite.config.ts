@@ -58,12 +58,12 @@ export default defineConfig({
     host: '0.0.0.0',
     port: process.env.PORT ? parseInt(process.env.PORT) : 3001,
     open: true,
-    // Proxy API requests to the backend server
+    // Proxy API requests to the deployed backend server
     proxy: {
       '/api': {
-        target: 'http://localhost:4002',
+        target: 'https://newsauswebdev.onrender.com',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
     },
   },
