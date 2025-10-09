@@ -3,33 +3,60 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { useContent } from '../../store/contentStore';
-import { Play, Star, StarOff } from 'lucide-react';
+import { useContent, YouTubeVideo } from '../../store/contentStore';
 import { Switch } from '../ui/switch';
+import { extractYouTubeId } from '../../utils/youtube';
+import { Play, Star, StarOff } from 'lucide-react'; // Add these imports
 
-export default function YouTubeVideosEditor() {
-  const { youtubeVideos, miniPlayerEnabled, setMiniPlayerEnabled, addYouTubeVideo, updateYouTubeVideo, deleteYouTubeVideo, setMiniPlayerVideo, clearMiniPlayerVideo } = useContent() as any;
-  const [editingVideo, setEditingVideo] = useState<any>(null);
+export function YouTubeVideosEditor() {
+  const { youtubeVideos, miniPlayerEnabled, setMiniPlayerEnabled, addYouTubeVideo, updateYouTubeVideo, deleteYouTubeVideo, setMiniPlayerVideo, clearMiniPlayerVideo } = useContent();
+  const [editingVideo, setEditingVideo] = useState(null as YouTubeVideo | null);
   const [isCreating, setIsCreating] = useState(false);
 
   const handleCreateVideo = () => {
-    setEditingVideo({ id: '', title: '', videoUrl: '' });
+    setEditingVideo({
+      id: '',
+      title: '',
+      videoUrl: '',
+    });
     setIsCreating(true);
   };
 
   const handleSaveVideo = () => {
     if (!editingVideo) return;
+
     if (isCreating) {
-      const newVideo = { ...editingVideo, id: Date.now().toString() };
+      const newVideo = {
+        ...editingVideo,
+        id: Date.now().toString(),
+      };
       addYouTubeVideo(newVideo);
     } else {
       updateYouTubeVideo(editingVideo);
     }
+
     setEditingVideo(null);
     setIsCreating(false);
   };
 
-  const miniPlayerVideo = youtubeVideos.find((v: any) => v.isMiniPlayer);
+  const handleDeleteVideo = (id: string) => {
+    deleteYouTubeVideo(id);
+  };
+
+  // Add function to set mini player video
+  const handleSetMiniPlayer = (id: string) => {
+    setMiniPlayerVideo(id);
+  };
+
+  // Add function to clear mini player video
+  const handleClearMiniPlayer = () => {
+    clearMiniPlayerVideo();
+  };
+
+  // Find the current mini player video
+  const miniPlayerVideo = youtubeVideos.find(video => video.isMiniPlayer);
+
+  // Use shared extractor utility
 
   return (
     <div className="space-y-6">
@@ -38,6 +65,7 @@ export default function YouTubeVideosEditor() {
         <Button onClick={handleCreateVideo}>Add New Video</Button>
       </div>
 
+      {/* Mini Player Status */}
       <Card>
         <CardHeader>
           <CardTitle>Mini Player Settings</CardTitle>
@@ -61,7 +89,7 @@ export default function YouTubeVideosEditor() {
                   <p className="text-sm text-gray-500">Currently set as mini player video</p>
                 </div>
               </div>
-              <Button variant="outline" onClick={clearMiniPlayerVideo}>
+              <Button variant="outline" onClick={handleClearMiniPlayer}>
                 <StarOff className="w-4 h-4 mr-2" />
                 Clear
               </Button>
@@ -85,13 +113,39 @@ export default function YouTubeVideosEditor() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="videoTitle">Video Title</Label>
-                  <Input id="videoTitle" value={editingVideo.title} onChange={(e) => setEditingVideo({ ...editingVideo, title: e.target.value })} />
+                  <Input
+                    id="videoTitle"
+                    value={editingVideo.title}
+                    onChange={(e) => setEditingVideo({ ...editingVideo, title: e.target.value })}
+                    placeholder="Enter video title"
+                  />
                 </div>
                 <div>
                   <Label htmlFor="videoUrl">YouTube URL</Label>
-                  <Input id="videoUrl" value={editingVideo.videoUrl} onChange={(e) => setEditingVideo({ ...editingVideo, videoUrl: e.target.value })} placeholder="https://www.youtube.com/watch?v=..." />
+                  <Input
+                    id="videoUrl"
+                    value={editingVideo.videoUrl}
+                    onChange={(e) => setEditingVideo({ ...editingVideo, videoUrl: e.target.value })}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                  />
                 </div>
               </div>
+              {editingVideo.videoUrl && (
+                <div className="mt-4">
+                  <Label>Preview</Label>
+                  <div className="mt-2">
+                    <iframe
+                      width="100%"
+                      height="315"
+                      src={`https://www.youtube.com/embed/${extractYouTubeId(editingVideo.videoUrl)}`}
+                      title="YouTube video preview"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                </div>
+              )}
               <div className="flex space-x-2">
                 <Button onClick={handleSaveVideo}>Save Video</Button>
                 <Button variant="outline" onClick={() => setEditingVideo(null)}>Cancel</Button>
@@ -101,23 +155,56 @@ export default function YouTubeVideosEditor() {
             <div className="space-y-4">
               {youtubeVideos.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {youtubeVideos.map((video: any) => (
+                  {youtubeVideos.map((video) => (
                     <div key={video.id} className="border rounded-lg p-4">
                       <h3 className="font-semibold text-gray-900 dark:text-white">{video.title}</h3>
+                      <div className="mt-2 aspect-video">
+                        <iframe
+                          width="100%"
+                          height="100%"
+                          src={`https://www.youtube.com/embed/${extractYouTubeId(video.videoUrl)}?playsinline=1&enablejsapi=1&origin=${window.location.origin}&widget_referrer=${window.location.origin}&modestbranding=1`}
+                          title={video.title}
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                          allowFullScreen
+                        ></iframe>
+                      </div>
                       <div className="mt-3 flex space-x-2">
                         {!video.isMiniPlayer ? (
-                          <Button size="sm" variant="outline" onClick={() => setMiniPlayerVideo(video.id)}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleSetMiniPlayer(video.id)}
+                          >
                             <Star className="w-4 h-4 mr-2" />
                             Set Mini Player
                           </Button>
                         ) : (
-                          <Button size="sm" variant="default" onClick={clearMiniPlayerVideo}>
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={handleClearMiniPlayer}
+                          >
                             <StarOff className="w-4 h-4 mr-2" />
                             Clear Mini Player
                           </Button>
                         )}
-                        <Button size="sm" onClick={() => { setEditingVideo(video); setIsCreating(false); }}>Edit</Button>
-                        <Button size="sm" variant="destructive" onClick={() => deleteYouTubeVideo(video.id)}>Delete</Button>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setEditingVideo(video);
+                            setIsCreating(false);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDeleteVideo(video.id)}
+                        >
+                          Delete
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -135,5 +222,3 @@ export default function YouTubeVideosEditor() {
     </div>
   );
 }
-
-

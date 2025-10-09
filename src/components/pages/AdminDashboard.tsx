@@ -14,14 +14,14 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell
 } from 'recharts';
-import { 
+import {
   LayoutDashboard, FileText, Users, Settings, LogOut, Plus, Edit, Trash2,
   Eye, Save, Upload, Calendar, Tag, Globe, TrendingUp, BarChart3,
   PieChart as PieChartIcon, Activity, Menu, X, BookOpenCheck, Home, Play
 } from 'lucide-react';
 import { useContent, ArticleItem, EPaperItem } from '../../store/contentStore';
 import { HomePageEditor } from './HomePageEditor';
-import YouTubeVideosEditor from './YouTubeVideosEditor.tsx';
+import { YouTubeVideosEditor } from './YouTubeVideosEditor';
 
 // Lightweight toast shim to avoid type import issues
 const toast = {
@@ -42,10 +42,10 @@ export function AdminDashboard() {
     addTag, breakingItems, breakingSpeedMs, breakingPauseOnHover, 
     addBreakingItem, removeBreakingItem, updateBreakingItem, 
     setBreakingSpeed, setBreakingPause, setBreakingItems,
-    epapers, addEPaper, deleteEPaper
+    epapers, addEPaper, deleteEPaper,
+    isLoading, error
   } = useContent();
   const [currentUser, setCurrentUser] = useState(null as AdminUser | null);
-  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [editingArticle, setEditingArticle] = useState(null as ArticleItem | null);
@@ -56,6 +56,8 @@ export function AdminDashboard() {
   const epaperFileInputRef = useRef(null as any);
   const [newEpaperTitle, setNewEpaperTitle] = useState('');
   const [newEpaperFile, setNewEpaperFile] = useState(null as File | null);
+
+  const userRole = (currentUser?.role || '').toLowerCase();
 
   // Recharts/Router aliases to satisfy type system
   const RLink: any = Link;
@@ -92,13 +94,39 @@ export function AdminDashboard() {
     if (storedUser) {
       setCurrentUser(JSON.parse(storedUser));
     } else {
-      navigate('/admin-login');
+      // Try to get user from token
+      const token = localStorage.getItem('token');
+      if (token) {
+        // Validate token and get user info
+        fetch('/api/auth/validate', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            const adminUser = {
+              email: data.user.email,
+              role: data.user.role,
+              name: data.user.name
+            };
+            setCurrentUser(adminUser);
+            localStorage.setItem('adminUser', JSON.stringify(adminUser));
+          } else {
+            navigate('/admin-login');
+          }
+        })
+        .catch(() => {
+          navigate('/admin-login');
+        });
+      } else {
+        navigate('/admin-login');
+      }
     }
-    setIsLoading(false);
   }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem('adminUser');
+    localStorage.removeItem('token');
     toast.success('Logged out successfully');
     navigate('/admin-login');
   };
@@ -123,42 +151,38 @@ export function AdminDashboard() {
     setActiveTab('editor');
   };
 
-  // Helper function to ensure placements object exists
-  const ensurePlacements = (article: ArticleItem | null): ArticleItem | null => {
-    if (!article) return article;
-    return {
-      ...article,
-      placements: article.placements || { homeHero: false, homeSection: 'none', categorySpot: 'none' }
-    } as ArticleItem;
-  };
-
-  const handleSaveArticle = () => {
+  const handleSaveArticle = async () => {
     if (!editingArticle) return;
 
-    // Ensure placements object exists before saving
-    const articleToSave = ensurePlacements(editingArticle) || editingArticle;
+    try {
+      if (isCreating) {
+        const newArticle = {
+          ...editingArticle,
+          id: Date.now().toString(),
+          slug: (editingArticle.slug || editingArticle.title).toLowerCase().replace(/\s+/g, '-')
+        } as ArticleItem;
+        await addArticle(newArticle);
+        toast.success('Article created successfully');
+      } else {
+        await updateArticle(editingArticle);
+        toast.success('Article updated successfully');
+      }
 
-    if (isCreating) {
-      const newArticle = {
-        ...articleToSave,
-        id: Date.now().toString(),
-        slug: (articleToSave.slug || articleToSave.title || '').toLowerCase().replace(/\s+/g, '-')
-      } as ArticleItem;
-      addArticle(newArticle);
-      toast.success('Article created successfully');
-    } else {
-      updateArticle(articleToSave);
-      toast.success('Article updated successfully');
+      setEditingArticle(null);
+      setIsCreating(false);
+      setActiveTab('content');
+    } catch (err) {
+      toast.error('Failed to save article');
     }
-
-    setEditingArticle(null);
-    setIsCreating(false);
-    setActiveTab('content');
   };
 
-  const handleDeleteArticle = (id: string) => {
-    deleteArticle(id);
-    toast.success('Article deleted successfully');
+  const handleDeleteArticle = async (id: string) => {
+    try {
+      await deleteArticle(id);
+      toast.success('Article deleted successfully');
+    } catch (err) {
+      toast.error('Failed to delete article');
+    }
   };
 
   const handleUploadEPaper = () => {
@@ -211,8 +235,8 @@ export function AdminDashboard() {
     { id: 'editor', label: 'Editor', icon: Edit },
     { id: 'breaking', label: 'Breaking', icon: Activity },
     { id: 'epaper', label: 'E-Paper', icon: BookOpenCheck },
-    ...(currentUser?.role === 'admin' || currentUser?.role === 'editor' ? [{ id: 'youtube', label: 'Video News', icon: Play }] : []),
-    ...(currentUser?.role === 'admin' ? [{ id: 'users', label: 'Users', icon: Users }] : []),
+    ...(userRole === 'admin' || userRole === 'editor' ? [{ id: 'youtube', label: 'Video News', icon: Play }] : []),
+    ...(userRole === 'admin' ? [{ id: 'users', label: 'Users', icon: Users }] : []),
     { id: 'settings', label: 'Settings', icon: Settings }
   ];
 
@@ -230,6 +254,19 @@ export function AdminDashboard() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-red-600 font-medium">Error: {error}</p>
+          <Button onClick={() => window.location.reload()} className="mt-4">
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }
@@ -331,11 +368,11 @@ export function AdminDashboard() {
                       <div className="p-3 rounded-lg bg-blue-100 dark:bg-blue-900/30 mr-4 flex-shrink-0">
                         <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                       </div>
-                      <div className="min-w-0 flex-1"> {/* Added min-w-0 and flex-1 for proper text wrapping */}
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white truncate"> {/* Added truncate */}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white truncate">
                           {articles.length}
                         </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-normal"> {/* Changed to whitespace-normal */}
+                        <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-normal">
                           Total Articles
                         </p>
                       </div>
@@ -349,11 +386,11 @@ export function AdminDashboard() {
                       <div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/30 mr-4 flex-shrink-0">
                         <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
                       </div>
-                      <div className="min-w-0 flex-1"> {/* Added min-w-0 and flex-1 for proper text wrapping */}
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white truncate"> {/* Added truncate */}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white truncate">
                           34.5K
                         </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-normal"> {/* Changed to whitespace-normal */}
+                        <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-normal">
                           Total Views
                         </p>
                       </div>
@@ -367,11 +404,11 @@ export function AdminDashboard() {
                       <div className="p-3 rounded-lg bg-purple-100 dark:bg-purple-900/30 mr-4 flex-shrink-0">
                         <Activity className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                       </div>
-                      <div className="min-w-0 flex-1"> {/* Added min-w-0 and flex-1 for proper text wrapping */}
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white truncate"> {/* Added truncate */}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white truncate">
                           {articles.filter(a => a.status === 'published').length}
                         </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-normal"> {/* Changed to whitespace-normal */}
+                        <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-normal">
                           Published
                         </p>
                       </div>
@@ -385,11 +422,11 @@ export function AdminDashboard() {
                       <div className="p-3 rounded-lg bg-red-100 dark:bg-red-900/30 mr-4 flex-shrink-0">
                         <BarChart3 className="w-6 h-6 text-red-600 dark:text-red-400" />
                       </div>
-                      <div className="min-w-0 flex-1"> {/* Added min-w-0 and flex-1 for proper text wrapping */}
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white truncate"> {/* Added truncate */}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white truncate">
                           {articles.filter(a => a.status === 'draft').length}
                         </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-normal"> {/* Changed to whitespace-normal */}
+                        <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-normal">
                           Drafts
                         </p>
                       </div>
@@ -498,9 +535,9 @@ export function AdminDashboard() {
                                   size="sm"
                                   variant="ghost"
                                   onClick={() => {
-                                    setEditingArticle(ensurePlacements(article as any));
+                                    setEditingArticle(article as any);
                                     setIsCreating(false);
-                                    // setActiveTab('editor'); // Removed tab navigation
+                                    setActiveTab('editor');
                                   }}
                                   className="p-2"
                                 >
@@ -697,27 +734,15 @@ export function AdminDashboard() {
                           <Label htmlFor="homeHero">Home Hero</Label>
                           <Switch
                             id="homeHero"
-                            checked={editingArticle?.placements?.homeHero || false}
-                            onCheckedChange={(checked) => setEditingArticle({ 
-                              ...editingArticle, 
-                              placements: { 
-                                ...(editingArticle?.placements || {}), 
-                                homeHero: checked 
-                              } 
-                            })}
+                            checked={editingArticle?.placements.homeHero || false}
+                            onCheckedChange={(checked) => setEditingArticle({ ...editingArticle, placements: { ...editingArticle.placements, homeHero: checked } })}
                           />
                         </div>
                         <div className="flex items-center space-x-2">
                           <Label htmlFor="homeSection">Home Section</Label>
                           <Select
-                            value={editingArticle?.placements?.homeSection || 'none'}
-                            onValueChange={(value) => setEditingArticle({ 
-                              ...editingArticle, 
-                              placements: { 
-                                ...(editingArticle?.placements || {}), 
-                                homeSection: value 
-                              } 
-                            })}
+                            value={editingArticle?.placements.homeSection || 'none'}
+                            onValueChange={(value) => setEditingArticle({ ...editingArticle, placements: { ...editingArticle.placements, homeSection: value } })}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Select a section" />
@@ -733,14 +758,8 @@ export function AdminDashboard() {
                         <div className="flex items-center space-x-2">
                           <Label htmlFor="categorySpot">Category Spot</Label>
                           <Select
-                            value={editingArticle?.placements?.categorySpot || 'none'}
-                            onValueChange={(value) => setEditingArticle({ 
-                              ...editingArticle, 
-                              placements: { 
-                                ...(editingArticle?.placements || {}), 
-                                categorySpot: value 
-                              } 
-                            })}
+                            value={editingArticle?.placements.categorySpot || 'none'}
+                            onValueChange={(value) => setEditingArticle({ ...editingArticle, placements: { ...editingArticle.placements, categorySpot: value } })}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Select a spot" />
@@ -810,76 +829,23 @@ export function AdminDashboard() {
                         onCheckedChange={setBreakingPause}
                       />
                     </div>
-                    <div className="flex items-end space-x-2">
-                      {editingTickerIndex === null && newTickerText.trim() !== '' && (
-                        <Button 
-                          onClick={() => {
-                            addBreakingItem(newTickerText);
-                            setNewTickerText('');
-                          }}
-                          className="bg-red-600 hover:bg-red-700"
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add Ticker
-                        </Button>
-                      )}
-                      {editingTickerIndex !== null && (
-                        <Button 
-                          onClick={() => {
-                            setEditingTickerIndex(null);
-                            setNewTickerText('');
-                          }}
-                          variant="outline"
-                        >
-                          Cancel
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">
-                <CardContent className="p-4">
-                  <div className="space-y-2">
-                    {breakingItems.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <span>{item}</span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setEditingTickerIndex(index)}
-                            className="p-2"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => removeBreakingItem(index)}
-                          className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
+            {(userRole === 'admin' || userRole === 'editor') && (
+              <TabsContent value="youtube" className="space-y-4">
+                <YouTubeVideosEditor />
+              </TabsContent>
+            )}
+
             <TabsContent value="epaper" className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">E-Papers</h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage E-Papers</p>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">E-Paper Management</h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Upload and manage digital newspapers</p>
                 </div>
-                <Button onClick={handleUploadEPaper} className="bg-red-600 hover:bg-red-700 whitespace-nowrap">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload E-Paper
-                </Button>
               </div>
 
               <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">
@@ -892,14 +858,16 @@ export function AdminDashboard() {
                         value={newEpaperTitle}
                         onChange={(e) => setNewEpaperTitle(e.target.value)}
                         className="mt-1"
+                        placeholder="Enter E-Paper title"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="epaperFile">File</Label>
+                      <Label htmlFor="epaperFile">PDF File</Label>
                       <Input
                         id="epaperFile"
                         type="file"
-                        accept="application/pdf"
+                        accept=".pdf"
+                        ref={epaperFileInputRef}
                         onChange={(e) => {
                           if (e.target.files && e.target.files.length > 0) {
                             setNewEpaperFile(e.target.files[0]);
@@ -907,19 +875,28 @@ export function AdminDashboard() {
                         }}
                         className="mt-1"
                       />
+                      <p className="text-xs text-gray-500 mt-1">PDF files only, max 8MB</p>
                     </div>
+                  </div>
+                  <div className="mt-4">
+                    <Button onClick={handleUploadEPaper} className="bg-red-600 hover:bg-red-700">
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload E-Paper
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">
-                <CardContent className="p-4">
-                  <div className="space-y-2">
-                    {epapers.map((epaper) => (
-                      <div key={epaper.id} className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <span>{epaper.title}</span>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">{epaper.uploadDate}</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+                {epapers.map((epaper) => (
+                  <Card key={epaper.id} className="border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-medium text-gray-900 dark:text-white">{epaper.title}</h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            Uploaded: {epaper.uploadDate}
+                          </p>
                         </div>
                         <Button
                           size="sm"
@@ -930,108 +907,83 @@ export function AdminDashboard() {
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                      <div className="mt-3">
+                        <Button size="sm" variant="outline" className="w-full">
+                          <Globe className="w-4 h-4 mr-2" />
+                          View PDF
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </TabsContent>
-
-            {(currentUser?.role === 'admin' || currentUser?.role === 'editor') && (
-              <TabsContent value="youtube" className="space-y-4">
-                <YouTubeVideosEditor />
-              </TabsContent>
-            )}
 
             {currentUser?.role === 'admin' && (
               <TabsContent value="users" className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Users</h2>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage users</p>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">User Management</h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage system users and permissions</p>
                   </div>
                   <Button className="bg-red-600 hover:bg-red-700 whitespace-nowrap">
                     <Plus className="w-4 h-4 mr-2" />
-                    New User
+                    Add User
                   </Button>
                 </div>
 
                 <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">
-                  <CardContent className="p-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="userEmail">Email</Label>
-                        <Input
-                          id="userEmail"
-                          type="email"
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="userName">Name</Label>
-                        <Input
-                          id="userName"
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="userRole">Role</Label>
-                        <Select>
-                          <SelectTrigger className="mt-1">
-                            <SelectValue placeholder="Select a role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="editor">Editor</SelectItem>
-                            <SelectItem value="viewer">Viewer</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">
-                  <CardContent className="p-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <span>user@example.com</span>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">Admin</span>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="p-2"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <span>user@example.com</span>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">Editor</span>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="p-2"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <span>user@example.com</span>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">Viewer</span>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="p-2"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </div>
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50 dark:bg-gray-800">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Last Login</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                          <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="flex-shrink-0 h-10 w-10">
+                                  <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                                    <span className="text-red-600 dark:text-red-400 font-medium">AU</span>
+                                  </div>
+                                </div>
+                                <div className="ml-4">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-white">Admin User</div>
+                                  <div className="text-sm text-gray-500 dark:text-gray-400">admin@example.com</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <Badge className="bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">Admin</Badge>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                                Active
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                              2 hours ago
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex space-x-2">
+                                <Button size="sm" variant="ghost" className="p-2">
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button size="sm" variant="ghost" className="p-2">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
                   </CardContent>
                 </Card>
@@ -1042,57 +994,38 @@ export function AdminDashboard() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white">Settings</h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Configure site settings</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Configure system preferences</p>
                 </div>
-                <Button className="bg-red-600 hover:bg-red-700 whitespace-nowrap">
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Settings
-                </Button>
               </div>
 
               <Card className="border border-gray-200 dark:border-gray-700 shadow-sm">
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <CardHeader>
+                  <CardTitle>General Settings</CardTitle>
+                  <CardDescription>Manage your publication settings</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="siteTitle">Site Title</Label>
-                      <Input
-                        id="siteTitle"
-                        className="mt-1"
-                      />
+                      <Label htmlFor="notifications">Email Notifications</Label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Receive email updates</p>
                     </div>
+                    <Switch id="notifications" />
+                  </div>
+                  <Separator />
+                  <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="siteDescription">Site Description</Label>
-                      <Textarea
-                        id="siteDescription"
-                        className="mt-1"
-                      />
+                      <Label htmlFor="auto-publish">Auto-publish Scheduled Articles</Label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Automatically publish scheduled content</p>
                     </div>
+                    <Switch id="auto-publish" defaultChecked />
+                  </div>
+                  <Separator />
+                  <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="siteLogo">Site Logo</Label>
-                      <Input
-                        id="siteLogo"
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files.length > 0) {
-                            onImageSelected(e.target.files[0]);
-                          }
-                        }}
-                        className="mt-1"
-                      />
+                      <Label htmlFor="dark-mode">Dark Mode</Label>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Enable dark theme</p>
                     </div>
-                    <div>
-                      <Label htmlFor="siteTheme">Site Theme</Label>
-                      <Select>
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Select a theme" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="light">Light</SelectItem>
-                          <SelectItem value="dark">Dark</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <Switch id="dark-mode" />
                   </div>
                 </CardContent>
               </Card>

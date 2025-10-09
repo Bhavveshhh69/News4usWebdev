@@ -2,67 +2,19 @@ import React, { useState } from 'react';
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { Play, TrendingUp, Mail } from 'lucide-react';
+import { Play, TrendingUp } from 'lucide-react';
 // @ts-ignore - Ignore TypeScript error for sonner import
 import { toast } from "sonner@2.0.3";
-import { useContent } from '../store/contentStore';
-import { extractYouTubeId } from '../utils/youtube';
+import { StockData, YouTubeVideo, TrendingArticle } from '../types';
 
-export function Sidebar() {
+interface SidebarProps {
+  stockData: StockData[];
+  youtubeVideos: YouTubeVideo[];
+  trendingArticles: TrendingArticle[];
+}
+
+export function Sidebar({ stockData, youtubeVideos, trendingArticles }: SidebarProps) {
   const [email, setEmail] = useState('');
-  const { youtubeVideos, articles } = useContent() as any;
-
-  // Get published articles
-  const published = articles.filter(a => (a.status === 'published') || (a.status === 'scheduled' && new Date(a.publishDate).getTime() <= Date.now()));
-  const sorted = [...published].sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime());
-
-  // Get stock-related articles for stock data
-  const stockArticles = articles
-    .filter(article => 
-      article.category.toLowerCase().includes('business') || 
-      article.tags.some(tag => tag.toLowerCase().includes('market')) ||
-      article.title.toLowerCase().includes('market') ||
-      article.summary.toLowerCase().includes('market')
-    )
-    .slice(0, 4);
-
-  // Generate stock data from articles or use fallback
-  const stockData = stockArticles.length > 0 ? stockArticles.map(article => ({
-    symbol: article.category.toUpperCase(),
-    value: 'N/A',
-    change: article.tags.includes('Breaking') ? '+1.2%' : '+0.5%',
-    isPositive: article.tags.includes('Breaking') || article.tags.includes('Positive')
-  })) : [
-    { symbol: 'S&P 500', value: '4,234.56', change: '+1.2%', isPositive: true },
-    { symbol: 'NASDAQ', value: '13,567.89', change: '+0.8%', isPositive: true },
-    { symbol: 'DOW JONES', value: '34,123.45', change: '-0.3%', isPositive: false },
-    { symbol: 'BITCOIN', value: '$45,678', change: '+2.1%', isPositive: true }
-  ];
-
-  const sidebarVideos = (youtubeVideos || []).slice(0, 6).map((v: any) => {
-    const id = extractYouTubeId(v.videoUrl || '');
-    return {
-      title: v.title,
-      thumbnail: id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : '',
-      duration: ''
-    };
-  });
-
-  // Get trending articles from the content store
-  const trendingArticles = sorted
-    .slice(0, 5)
-    .map(article => article.title);
-
-  // Fallback trending articles if no articles are available
-  const fallbackTrendingArticles = [
-    "Economic reforms reshape global markets",
-    "Climate summit reaches historic agreement", 
-    "Technology breakthrough in AI research",
-    "Sports championship breaks viewership records",
-    "Entertainment industry shows strong recovery"
-  ];
-
-  const displayTrendingArticles = trendingArticles.length > 0 ? trendingArticles : fallbackTrendingArticles;
 
   const handleSubscribe = (e: any) => {
     e.preventDefault();
@@ -111,7 +63,7 @@ export function Sidebar() {
         <h3 className="font-bold text-gray-900 dark:text-white mb-4">Video News</h3>
         
         <div className="space-y-4">
-          {sidebarVideos.map((video, index) => (
+          {youtubeVideos.map((video, index) => (
             <div key={index} className="flex space-x-3 group cursor-pointer">
               <div className="relative flex-shrink-0">
                 <ImageWithFallback
@@ -136,16 +88,14 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Trending Now */}
+      {/* Trending Articles */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        <h3 className="font-bold text-gray-900 dark:text-white mb-4">Trending Now</h3>
+        <h3 className="font-bold text-gray-900 dark:text-white mb-4">Trending</h3>
         
         <div className="space-y-3">
-          {displayTrendingArticles.map((article, index) => (
-            <div key={index} className="flex items-start space-x-3 group cursor-pointer">
-              <span className="text-red-600 font-bold text-sm flex-shrink-0 mt-1">
-                {index + 1}
-              </span>
+          {trendingArticles.map((article, index) => (
+            <div key={index} className="flex items-start space-x-2 group cursor-pointer">
+              <span className="text-red-600 font-bold text-sm">{index + 1}.</span>
               <p className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
                 {article}
               </p>
@@ -154,28 +104,28 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Newsletter Subscription */}
-      <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-6">
-        <div className="flex items-center space-x-2 mb-3">
-          <Mail className="w-5 h-5 text-red-600" />
-          <h3 className="font-bold text-gray-900 dark:text-white">Stay Updated</h3>
-        </div>
-        
-        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-          Get the latest news in your inbox
+      {/* Newsletter Signup */}
+      <div className="bg-gradient-to-r from-red-600 to-red-800 rounded-lg shadow-md p-6 text-white">
+        <h3 className="font-bold mb-2">Stay Updated</h3>
+        <p className="text-red-100 text-sm mb-4">
+          Get the latest news delivered to your inbox
         </p>
         
         <form onSubmit={handleSubscribe} className="space-y-3">
-          <Input
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full"
-          />
-          <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white">
-            Subscribe Now
+          <div>
+            <Input
+              type="email"
+              placeholder="Your email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="bg-white/20 border-white/30 text-white placeholder-red-200 focus:ring-white focus:border-white"
+            />
+          </div>
+          <Button 
+            type="submit"
+            className="w-full bg-white text-red-600 hover:bg-red-50"
+          >
+            Subscribe
           </Button>
         </form>
       </div>

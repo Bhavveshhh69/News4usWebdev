@@ -1,11 +1,7 @@
 import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
 
 // Route Context for navigation
-const RouteContext = createContext<{
-  currentRoute: string;
-  params: Record<string, string>;
-  navigate: (path: string, params?: Record<string, string>) => void;
-}>({
+const RouteContext = createContext({
   currentRoute: '/',
   params: {},
   navigate: () => {},
@@ -13,13 +9,13 @@ const RouteContext = createContext<{
 
 export const useRouter = () => useContext(RouteContext);
 
-export function Router({ children }: { children?: React.ReactNode }) {
+export function Router({ children }) {
   const [currentRoute, setCurrentRoute] = useState('/');
-  const [params, setParams] = useState<Record<string, string>>({});
+  const [params, setParams] = useState({});
 
-  const parseSearchParams = (search: string): Record<string, string> => {
+  const parseSearchParams = (search) => {
     const urlSearchParams = new URLSearchParams(search);
-    const parsed: Record<string, string> = {};
+    const parsed = {};
     urlSearchParams.forEach((value, key) => {
       parsed[key] = value;
     });
@@ -42,7 +38,7 @@ export function Router({ children }: { children?: React.ReactNode }) {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  const navigate = useCallback((path: string, newParams: Record<string, string> = {}) => {
+  const navigate = useCallback((path, newParams = {}) => {
     // Build a normalized URL with merged query params
     const url = new URL(path, window.location.origin);
     Object.entries(newParams || {}).forEach(([key, value]) => {
@@ -67,13 +63,7 @@ export function Router({ children }: { children?: React.ReactNode }) {
   );
 }
 
-interface RouteProps {
-  path: string;
-  component: React.ComponentType<any>;
-  exact?: boolean;
-}
-
-export function Route({ path, component: Component, exact = false }: RouteProps) {
+export function Route({ path, component: Component, exact = false }) {
   const { currentRoute } = useRouter();
   
   const isMatch = exact 
@@ -85,53 +75,44 @@ export function Route({ path, component: Component, exact = false }: RouteProps)
   return <Component />;
 }
 
-interface LinkProps {
-  to: string;
-  children: React.ReactNode;
-  className?: string;
-  params?: Record<string, string>;
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
-  onClick?: () => void;
-  role?: string;
-}
+// Create Link component
+const LinkComponent = React.forwardRef(({ to, children, className, params, onMouseEnter, onMouseLeave, onClick, role }, ref) => {
+  const { navigate } = useRouter();
 
-export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
-  ({ to, children, className, params, onMouseEnter, onMouseLeave, onClick, role }, ref) => {
-    const { navigate } = useRouter();
+  const handleClick = (e) => {
+    e.preventDefault();
+    // Compose URL with query params for shareable links
+    let toWithQuery = to;
+    if (params && Object.keys(params).length > 0) {
+      const url = new URL(to, window.location.origin);
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          url.searchParams.set(key, String(value));
+        }
+      });
+      toWithQuery = url.pathname + url.search;
+    }
 
-    const handleClick = (e: React.MouseEvent) => {
-      e.preventDefault();
-      // Compose URL with query params for shareable links
-      let toWithQuery = to;
-      if (params && Object.keys(params).length > 0) {
-        const url = new URL(to, window.location.origin);
-        Object.entries(params).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            url.searchParams.set(key, String(value));
-          }
-        });
-        toWithQuery = url.pathname + url.search;
-      }
+    navigate(toWithQuery, params);
+    onClick?.();
+  };
 
-      navigate(toWithQuery, params);
-      onClick?.();
-    };
+  return (
+    <a 
+      ref={ref}
+      href={params && Object.keys(params).length > 0 ? (() => { const u = new URL(to, window.location.origin); Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null) u.searchParams.set(k, String(v)); }); return u.pathname + u.search; })() : to}
+      onClick={handleClick} 
+      className={className}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      role={role}
+    >
+      {children}
+    </a>
+  );
+});
 
-    return (
-      <a 
-        ref={ref}
-        href={params && Object.keys(params).length > 0 ? (() => { const u = new URL(to, window.location.origin); Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null) u.searchParams.set(k, String(v)); }); return u.pathname + u.search; })() : to}
-        onClick={handleClick} 
-        className={className}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        role={role}
-      >
-        {children}
-      </a>
-    );
-  }
-);
+LinkComponent.displayName = 'Link';
 
-Link.displayName = 'Link';
+// Export Link
+export const Link = LinkComponent;

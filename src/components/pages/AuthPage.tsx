@@ -7,15 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '../ui/input-otp';
 import { Link } from '../Router';
 import { Mail, Phone, Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react';
-import { toast } from 'sonner';
-const RLink: any = Link;
+import { toast } from 'sonner@2.0.3';
 
 type AuthStep = 'login' | 'signup' | 'forgot-password' | 'otp-verification' | 'success';
 type AuthMode = 'email' | 'phone';
 
 export function AuthPage() {
-  const [currentStep, setCurrentStep] = useState('login' as AuthStep);
-  const [authMode, setAuthMode] = useState('email' as AuthMode);
+  const [currentStep, setCurrentStep] = useState<AuthStep>('login');
+  const [authMode, setAuthMode] = useState<AuthMode>('email');
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -30,14 +29,14 @@ export function AuthPage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleLogin = (e: any) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     // Mock login logic
     toast.success('Login successful!');
     setCurrentStep('success');
   };
 
-  const handleSignup = (e: any) => {
+  const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match!');
@@ -48,14 +47,14 @@ export function AuthPage() {
     setCurrentStep('otp-verification');
   };
 
-  const handleForgotPassword = (e: any) => {
+  const handleForgotPassword = (e: React.FormEvent) => {
     e.preventDefault();
     // Mock forgot password logic
     toast.info('Reset code sent!');
     setCurrentStep('otp-verification');
   };
 
-  const handleOTPVerification = (e: any) => {
+  const handleOTPVerification = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.otp.length !== 6) {
       toast.error('Please enter a valid 6-digit code');
@@ -336,11 +335,11 @@ export function AuthPage() {
           Your account has been successfully verified. You can now access all features.
         </p>
       </div>
-      <RLink to="/">
+      <Link to="/">
         <Button className="bg-red-600 hover:bg-red-700">
           Continue to Homepage
         </Button>
-      </RLink>
+      </Link>
     </div>
   );
 
@@ -349,12 +348,12 @@ export function AuthPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <RLink to="/">
+            <Link to="/">
               <h1 className="text-2xl font-bold cursor-pointer">
                 <span className="text-red-600">NEWS</span>
                 <span className="text-gray-900 dark:text-white">4US</span>
               </h1>
-            </RLink>
+            </Link>
           </CardHeader>
           <CardContent>
             {renderSuccessPage()}
@@ -369,12 +368,12 @@ export function AuthPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <RLink to="/">
+            <Link to="/">
               <h1 className="text-2xl font-bold cursor-pointer">
                 <span className="text-red-600">NEWS</span>
                 <span className="text-gray-900 dark:text-white">4US</span>
               </h1>
-            </RLink>
+            </Link>
             <CardTitle>Verify Your Account</CardTitle>
             <CardDescription>Enter the verification code we sent you</CardDescription>
           </CardHeader>
@@ -391,12 +390,12 @@ export function AuthPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <RLink to="/">
+            <Link to="/">
               <h1 className="text-2xl font-bold cursor-pointer">
                 <span className="text-red-600">NEWS</span>
                 <span className="text-gray-900 dark:text-white">4US</span>
               </h1>
-            </RLink>
+            </Link>
             <CardTitle>Reset Password</CardTitle>
             <CardDescription>We'll send you a reset code</CardDescription>
           </CardHeader>
@@ -412,12 +411,12 @@ export function AuthPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <RLink to="/">
+          <Link to="/">
             <h1 className="text-2xl font-bold cursor-pointer">
               <span className="text-red-600">NEWS</span>
               <span className="text-gray-900 dark:text-white">4US</span>
             </h1>
-          </RLink>
+          </Link>
           <CardTitle>Welcome to NEWS4US</CardTitle>
           <CardDescription>Sign in to access your personalized news experience</CardDescription>
         </CardHeader>

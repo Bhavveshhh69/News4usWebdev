@@ -29,8 +29,8 @@ export function HomePageEditor() {
     homePageContent,
     setHomePageContent
   } = useContent();
-  const [content, setContent] = useState<HomePageContent>(defaultHomePageContent);
-  const [breakingNewsItems, setBreakingNewsItems] = useState<string[]>([]);
+  const [content, setContent] = useState(defaultHomePageContent);
+  const [breakingNewsItems, setBreakingNewsItems] = useState([] as string[]);
   const [tickerSpeed, setTickerSpeed] = useState(22000);
   const [tickerPauseOnHover, setTickerPauseOnHover] = useState(true);
   const [newTickerItem, setNewTickerItem] = useState('');
@@ -56,6 +56,8 @@ export function HomePageEditor() {
     setBreakingItems(breakingNewsItems);
     setBreakingSpeed(tickerSpeed);
     setBreakingPause(tickerPauseOnHover);
+    // Show success message
+    alert('Changes saved successfully!');
   };
 
   const addTickerItem = () => {

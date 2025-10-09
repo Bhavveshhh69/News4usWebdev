@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 export type ArticleStatus = 'draft' | 'scheduled' | 'published' | 'archived';
 
@@ -29,7 +29,7 @@ export interface YouTubeVideo {
   id: string;
   title: string;
   videoUrl: string;
-  isMiniPlayer?: boolean;
+  isMiniPlayer?: boolean; // Add this field to mark video for mini player
 }
 
 export interface ArticleItem {
@@ -60,17 +60,17 @@ interface ContentContextValue {
   breakingSpeedMs: number;
   breakingPauseOnHover: boolean;
   homePageContent: HomePageContent;
-  addArticle: (a: ArticleItem) => void;
-  updateArticle: (a: ArticleItem) => void;
-  deleteArticle: (id: string) => void;
+  addArticle: (a: ArticleItem) => Promise<void>;
+  updateArticle: (a: ArticleItem) => Promise<void>;
+  deleteArticle: (id: string) => Promise<void>;
   addTag: (t: string) => void;
   addEPaper: (epaper: EPaperItem) => void;
   deleteEPaper: (id: string) => void;
-  addYouTubeVideo: (video: YouTubeVideo) => void;
-  updateYouTubeVideo: (video: YouTubeVideo) => void;
-  deleteYouTubeVideo: (id: string) => void;
-  setMiniPlayerVideo: (id: string) => void;
-  clearMiniPlayerVideo: () => void;
+  addYouTubeVideo: (video: YouTubeVideo) => Promise<void>;
+  updateYouTubeVideo: (video: YouTubeVideo) => Promise<void>;
+  deleteYouTubeVideo: (id: string) => Promise<void>;
+  setMiniPlayerVideo: (id: string) => Promise<void>;
+  clearMiniPlayerVideo: () => Promise<void>;
   setMiniPlayerEnabled: (enabled: boolean) => void;
   setBreakingItems: (items: string[]) => void;
   addBreakingItem: (text: string) => void;
@@ -79,6 +79,8 @@ interface ContentContextValue {
   setBreakingSpeed: (ms: number) => void;
   setBreakingPause: (v: boolean) => void;
   setHomePageContent: (content: HomePageContent) => void;
+  isLoading: boolean;
+  error: string | null;
 }
 
 const defaultCategories = ['News', 'Politics', 'Health', 'Sports', 'Entertainment', 'Technology', 'Business'];
@@ -111,6 +113,44 @@ const seedEPapers: EPaperItem[] = [
     title: 'Sunday Edition - January 21, 2024',
     uploadDate: '2024-01-21',
     fileUrl: '/sample-epaper.pdf'
+  }
+];
+
+const seedYouTubeVideos: YouTubeVideo[] = [
+  {
+    id: 'yt-1',
+    title: "Breaking: Global Climate Summit Reaches Historic Agreement",
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  },
+  {
+    id: 'yt-2',
+    title: "LIVE: Tech Market Analysis - AI Stocks Surge",
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  },
+  {
+    id: 'yt-3',
+    title: "Healthcare Breakthrough: New Cancer Treatment",
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  },
+  {
+    id: 'yt-4',
+    title: "Championship Final Highlights",
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  },
+  {
+    id: 'yt-5',
+    title: "Celebrity Award Show Behind The Scenes",
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  },
+  {
+    id: 'yt-6',
+    title: "Political Debate Analysis",
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  },
+  {
+    id: '1',
+    title: 'My Latest YouTube Upload',
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
   }
 ];
 
@@ -181,34 +221,141 @@ const seedArticles: ArticleItem[] = [
   },
 ];
 
-const seedYouTubeVideos: YouTubeVideo[] = [
-  { id: 'yt-1', title: 'Breaking: Global Climate Summit Reaches Historic Agreement', videoUrl: 'https://www.youtube.com/watch?v=jNQXAC9IVRw', isMiniPlayer: true },
-  { id: 'yt-2', title: 'LIVE: Tech Market Analysis - AI Stocks Surge', videoUrl: 'https://www.youtube.com/watch?v=9bZkp7q19f0' },
-  { id: 'yt-3', title: 'Healthcare Breakthrough: New Cancer Treatment', videoUrl: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ' }
-];
-
 const STORAGE_KEY = 'contentStore_v1';
-const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || '/api';
-
-// Fallback for development when env var is not set
-const FALLBACK_API_BASE = (import.meta as any).env?.MODE === 'development' 
-  ? '/api' 
-  : 'https://news4uswebdev.onrender.com/api';
+const API_BASE = process.env.NODE_ENV === 'production' 
+  ? 'https://newsauswebdev.onrender.com/api' 
+  : '/api';
 
 const ContentContext = createContext(null as any);
 
 export function ContentProvider({ children }: { children?: any }) {
-  const [articles, setArticles] = useState([] as ArticleItem[]);
-  const [tags, setTags] = useState(defaultTags as string[]);
-  const [epapers, setEPapers] = useState(seedEPapers as EPaperItem[]);
-  const [youtubeVideos, setYouTubeVideos] = useState(seedYouTubeVideos as YouTubeVideo[]);
+  const [articles, setArticles] = useState([]);
+  const [tags, setTags] = useState(defaultTags);
+  const [epapers, setEPapers] = useState(seedEPapers);
+  const [youtubeVideos, setYouTubeVideos] = useState([]);
   const [miniPlayerEnabled, setMiniPlayerEnabledState] = useState(true);
-  const [breakingItems, setBreakingItemsState] = useState(defaultBreaking as string[]);
+  const [breakingItems, setBreakingItemsState] = useState(defaultBreaking);
   const [breakingSpeedMs, setBreakingSpeedMs] = useState(22000);
   const [breakingPauseOnHover, setBreakingPauseOnHover] = useState(true);
-  const [homePageContent, setHomePageContentState] = useState(defaultHomePageContent as HomePageContent);
+  const [homePageContent, setHomePageContentState] = useState(defaultHomePageContent);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  // Fetch data from backend on component mount
   useEffect(() => {
+    fetchDataFromBackend();
+  }, []);
+
+  const fetchDataFromBackend = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Try to get token from localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        // If no token, load from localStorage as fallback
+        loadFromLocalStorage();
+        return;
+      }
+
+      // Fetch articles
+      try {
+        const articlesResponse = await fetch(`${API_BASE}/articles`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (articlesResponse.ok) {
+          const articlesData = await articlesResponse.json();
+          // Transform backend data to match frontend structure
+          const transformedArticles = articlesData.articles.map((article: any) => ({
+            id: article.id.toString(),
+            title: article.title,
+            summary: article.summary,
+            content: article.content,
+            imageUrl: '', // Will need to be set properly
+            category: article.category_name || 'News',
+            tags: article.tags ? article.tags.map((tag: any) => tag.name) : [],
+            author: article.author_name || '',
+            publishDate: article.published_at ? article.published_at.split('T')[0] : new Date().toISOString().split('T')[0],
+            readTime: '5 min read', // Default value
+            views: article.views || 0,
+            status: article.status || 'draft',
+            slug: article.title ? article.title.toLowerCase().replace(/\s+/g, '-') : '',
+            placements: { 
+              homeHero: article.is_featured || false, 
+              homeSection: article.category_name || 'News', 
+              categorySpot: 'none' 
+            }
+          }));
+          setArticles(transformedArticles);
+        } else {
+          console.error('Failed to fetch articles:', articlesResponse.status, articlesResponse.statusText);
+        }
+      } catch (err) {
+        console.error('Failed to fetch articles:', err);
+      }
+
+      // Fetch categories
+      try {
+        const categoriesResponse = await fetch(`${API_BASE}/categories`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        // Handle categories if needed
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      }
+
+      // Fetch tags
+      try {
+        const tagsResponse = await fetch(`${API_BASE}/tags`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        // Handle tags if needed
+      } catch (err) {
+        console.error('Failed to fetch tags:', err);
+      }
+
+      // For now, keep YouTube videos and other content in localStorage
+      // In a full implementation, these would also be fetched from backend
+      loadSupplementaryDataFromLocalStorage();
+    } catch (error) {
+      console.error('Failed to fetch data from backend:', error);
+      setError('Failed to load content from server');
+      // Fallback to localStorage
+      loadFromLocalStorage();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadSupplementaryDataFromLocalStorage = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setEPapers(parsed.epapers || seedEPapers);
+        setYouTubeVideos(parsed.youtubeVideos || seedYouTubeVideos);
+        setMiniPlayerEnabledState(parsed.miniPlayerEnabled ?? true);
+        setBreakingItemsState(parsed.breakingItems || defaultBreaking);
+        setBreakingSpeedMs(parsed.breakingSpeedMs || 22000);
+        setBreakingPauseOnHover(parsed.breakingPauseOnHover ?? true);
+        setHomePageContentState(parsed.homePageContent || defaultHomePageContent);
+      } else {
+        setEPapers(seedEPapers);
+        setYouTubeVideos(seedYouTubeVideos);
+        setMiniPlayerEnabledState(true);
+        setHomePageContentState(defaultHomePageContent);
+      }
+    } catch (err) {
+      console.error('Failed to load supplementary data from localStorage:', err);
+      setEPapers(seedEPapers);
+      setYouTubeVideos(seedYouTubeVideos);
+      setMiniPlayerEnabledState(true);
+      setHomePageContentState(defaultHomePageContent);
+    }
+  };
+
+  const loadFromLocalStorage = () => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
@@ -234,18 +381,18 @@ export function ContentProvider({ children }: { children?: any }) {
       setArticles(seedArticles);
       setTags(defaultTags);
       setEPapers(seedEPapers);
-      setYouTubeVideos(seedYouTubeVideos);
       setMiniPlayerEnabledState(true);
       setHomePageContentState(defaultHomePageContent);
     }
-  }, []);
+  };
 
+  // Persist supplementary data to localStorage
   useEffect(() => {
     try {
       const payload = { 
-        articles, 
-        tags, 
-        // NOTE: We intentionally do NOT persist `epapers` here to avoid localStorage quota errors
+        // NOTE: We intentionally do NOT persist articles here as they come from backend
+        tags,
+        epapers,
         youtubeVideos,
         miniPlayerEnabled,
         breakingItems, 
@@ -261,7 +408,7 @@ export function ContentProvider({ children }: { children?: any }) {
       // Avoid crashing the app if localStorage quota is exceeded
       console.warn('Failed to persist content store to localStorage:', err);
     }
-  }, [articles, tags, youtubeVideos, miniPlayerEnabled, breakingItems, breakingSpeedMs, breakingPauseOnHover, homePageContent]);
+  }, [tags, epapers, youtubeVideos, breakingItems, breakingSpeedMs, breakingPauseOnHover, homePageContent]);
 
   const setBreakingItems = (items: string[]) => {
     setBreakingItemsState(items);
@@ -295,16 +442,158 @@ export function ContentProvider({ children }: { children?: any }) {
     setHomePageContentState(content);
   };
 
-  const addArticle = (a: ArticleItem) => {
-    setArticles([...articles, a]);
+  const addArticle = async (a: ArticleItem) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
+      // Transform frontend data to backend format
+      const backendArticle = {
+        title: a.title,
+        summary: a.summary,
+        content: a.content,
+        categoryId: 1, // Default category ID, should be properly mapped
+        tags: a.tags,
+        status: a.status,
+        isFeatured: a.placements?.homeHero
+      };
+
+      const response = await fetch(`${API_BASE}/articles`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(backendArticle)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        // Transform backend response to frontend format
+        const newArticle = {
+          id: result.article.id.toString(),
+          title: result.article.title,
+          summary: result.article.summary,
+          content: result.article.content,
+          imageUrl: '',
+          category: result.article.category_name || 'News',
+          tags: result.article.tags ? result.article.tags.map((tag) => tag.name) : [],
+          author: result.article.author_name || '',
+          publishDate: result.article.published_at ? result.article.published_at.split('T')[0] : new Date().toISOString().split('T')[0],
+          readTime: '5 min read', // Default value
+          views: result.article.views || 0,
+          status: result.article.status || 'draft',
+          slug: result.article.title ? result.article.title.toLowerCase().replace(/\s+/g, '-') : '',
+          placements: { 
+            homeHero: result.article.is_featured || false, 
+            homeSection: result.article.category_name || 'News', 
+            categorySpot: 'none' 
+          }
+        };
+        setArticles([...articles, newArticle]);
+        return newArticle;
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to create article:', response.status, response.statusText, errorText);
+        throw new Error(`Failed to create article: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Failed to add article:', error);
+      setError('Failed to add article');
+      // Fallback to local state update
+      setArticles([...articles, a]);
+      throw error;
+    }
   };
 
-  const updateArticle = (a: ArticleItem) => {
-    setArticles(articles.map(item => item.id === a.id ? a : item));
+  const updateArticle = async (a: ArticleItem) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
+      // Transform frontend data to backend format
+      const backendArticle = {
+        title: a.title,
+        summary: a.summary,
+        content: a.content,
+        categoryId: 1, // Default category ID, should be properly mapped
+        tags: a.tags,
+        status: a.status,
+        isFeatured: a.placements?.homeHero
+      };
+
+      const response = await fetch(`${API_BASE}/articles/${a.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(backendArticle)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        // Transform backend response to frontend format
+        const updatedArticle = {
+          id: result.article.id.toString(),
+          title: result.article.title,
+          summary: result.article.summary,
+          content: result.article.content,
+          imageUrl: '',
+          category: result.article.category_name || 'News',
+          tags: result.article.tags ? result.article.tags.map((tag) => tag.name) : [],
+          author: result.article.author_name || '',
+          publishDate: result.article.published_at ? result.article.published_at.split('T')[0] : new Date().toISOString().split('T')[0],
+          views: result.article.views || 0,
+          status: result.article.status || 'draft',
+          slug: result.article.title ? result.article.title.toLowerCase().replace(/\s+/g, '-') : '',
+          placements: { 
+            homeHero: result.article.is_featured || false, 
+            homeSection: result.article.category_name || 'News', 
+            categorySpot: 'none' 
+          }
+        };
+        setArticles(articles.map(item => item.id === a.id ? updatedArticle : item));
+      } else {
+        throw new Error('Failed to update article');
+      }
+    } catch (error) {
+      console.error('Failed to update article:', error);
+      setError('Failed to update article');
+      // Fallback to local state update
+      setArticles(articles.map(item => item.id === a.id ? a : item));
+    }
   };
 
-  const deleteArticle = (id: string) => {
-    setArticles(articles.filter(a => a.id !== id));
+  const deleteArticle = async (id: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch(`${API_BASE}/articles/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setArticles(articles.filter(a => a.id !== id));
+      } else {
+        throw new Error('Failed to delete article');
+      }
+    } catch (error) {
+      console.error('Failed to delete article:', error);
+      setError('Failed to delete article');
+      // Fallback to local state update
+      setArticles(articles.filter(a => a.id !== id));
+    }
   };
 
   const addTag = (t: string) => {
@@ -321,24 +610,40 @@ export function ContentProvider({ children }: { children?: any }) {
     setEPapers(epapers.filter(e => e.id !== id));
   };
 
-  const addYouTubeVideo = (video: YouTubeVideo) => {
+  const addYouTubeVideo = async (video: YouTubeVideo) => {
+    // For now, keep YouTube videos in localStorage
+    // In a full implementation, this would be sent to backend
     setYouTubeVideos([...youtubeVideos, video]);
   };
 
-  const updateYouTubeVideo = (video: YouTubeVideo) => {
-    setYouTubeVideos(youtubeVideos.map(v => v.id === video.id ? video : v));
+  const updateYouTubeVideo = async (video: YouTubeVideo) => {
+    // For now, keep YouTube videos in localStorage
+    // In a full implementation, this would be sent to backend
+    setYouTubeVideos(youtubeVideos.map(item => item.id === video.id ? video : item));
   };
 
-  const deleteYouTubeVideo = (id: string) => {
+  const deleteYouTubeVideo = async (id: string) => {
+    // For now, keep YouTube videos in localStorage
+    // In a full implementation, this would be sent to backend
     setYouTubeVideos(youtubeVideos.filter(v => v.id !== id));
   };
 
-  const setMiniPlayerVideo = (id: string) => {
-    setYouTubeVideos(youtubeVideos.map(v => ({ ...v, isMiniPlayer: v.id === id })));
+  const setMiniPlayerVideo = async (id: string) => {
+    // For now, keep YouTube videos in localStorage
+    // In a full implementation, this would be sent to backend
+    setYouTubeVideos(youtubeVideos.map(video => ({
+      ...video,
+      isMiniPlayer: video.id === id
+    })));
   };
 
-  const clearMiniPlayerVideo = () => {
-    setYouTubeVideos(youtubeVideos.map(v => ({ ...v, isMiniPlayer: false })));
+  const clearMiniPlayerVideo = async () => {
+    // For now, keep YouTube videos in localStorage
+    // In a full implementation, this would be sent to backend
+    setYouTubeVideos(youtubeVideos.map(video => ({
+      ...video,
+      isMiniPlayer: false
+    })));
   };
 
   const setMiniPlayerEnabled = (enabled: boolean) => {
@@ -375,7 +680,9 @@ export function ContentProvider({ children }: { children?: any }) {
       updateBreakingItem,
       setBreakingSpeed,
       setBreakingPause,
-      setHomePageContent
+      setHomePageContent,
+      isLoading,
+      error
     }}>
       {children}
     </ContentContext.Provider>
@@ -383,7 +690,7 @@ export function ContentProvider({ children }: { children?: any }) {
 }
 
 export function useContent() {
-  return useContext(ContentContext) as ContentContextValue;
+  return useContext(ContentContext);
 }
 
 export function timeAgoFrom(dateString: string): string {

@@ -1,7 +1,7 @@
-import React, { useRef, useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import { X, ExternalLink, Play, Pause, Volume2, VolumeX, Maximize, Minimize } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, X, ExternalLink } from 'lucide-react';
 
 interface VideoPlayerProps {
   videoId: string;
@@ -24,32 +24,32 @@ export function VideoPlayer({
   onClose,
   className = ""
 }: VideoPlayerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isPlaying, setIsPlaying] = useState(autoPlay);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(autoPlay || false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(true);
   const [isPiP, setIsPiP] = useState(false);
-  const [showControls, setShowControls] = useState(false);
+  const containerRef = useRef(null as HTMLDivElement | null);
+  const iframeRef = useRef(null as HTMLIFrameElement | null);
 
   // YouTube embed URL with improved parameters
   const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=${autoPlay ? 1 : 0}&mute=${isMuted ? 1 : 0}&controls=1&rel=0&playsinline=1&enablejsapi=1&origin=${window.location.origin}&widget_referrer=${window.location.origin}&modestbranding=1`;
 
   const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
+    // For YouTube iframe, we can't directly control play/pause
+    // The user can use YouTube's built-in controls
+    setIsPlaying(!isPlaying);
   };
 
   const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
+    // For YouTube iframe, we can't directly control mute
+    // The user can use YouTube's built-in controls
+    setIsMuted(!isMuted);
+    
+    // Update the iframe source to reflect the mute change
+    if (iframeRef.current) {
+      const newUrl = `https://www.youtube.com/embed/${videoId}?autoplay=${autoPlay ? 1 : 0}&mute=${!isMuted ? 1 : 0}&controls=1&rel=0&playsinline=1&enablejsapi=1&origin=${window.location.origin}&widget_referrer=${window.location.origin}&modestbranding=1`;
+      iframeRef.current.src = newUrl;
     }
   };
 
@@ -65,40 +65,64 @@ export function VideoPlayer({
   };
 
   const togglePiP = async () => {
-    if (videoRef.current) {
-      try {
-        if (!isPiP) {
-          await videoRef.current.requestPictureInPicture();
-          setIsPiP(true);
-        } else {
-          document.exitPictureInPicture();
-          setIsPiP(false);
-        }
-      } catch (error) {
-        console.log('PiP not supported or failed:', error);
-      }
-    }
+    // PiP is not supported for iframes, show a message or handle gracefully
+    console.log('PiP not supported for YouTube iframe');
   };
 
   const openYouTube = () => {
     window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
   };
 
+  useEffect(() => {
+    let hideControlsTimeout: NodeJS.Timeout;
+
+    const handleMouseMove = () => {
+      setShowControls(true);
+      clearTimeout(hideControlsTimeout);
+      hideControlsTimeout = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+    };
+
+    if (containerRef.current) {
+      containerRef.current.addEventListener('mousemove', handleMouseMove);
+    }
+
+    return () => {
+      if (containerRef.current) {
+        containerRef.current.removeEventListener('mousemove', handleMouseMove);
+      }
+      clearTimeout(hideControlsTimeout);
+    };
+  }, []);
+
   const VideoContent = () => (
-    <div
+    <div 
       ref={containerRef}
       className={`relative bg-black rounded-lg overflow-hidden group ${className}`}
       style={{ aspectRatio: '16/9', width: '100%', height: '100%' }}
-      onMouseEnter={() => setShowControls(true)}
-      onMouseLeave={() => setShowControls(false)}
+      role="region"
+      aria-label={`Video player: ${title}`}
     >
+      {/* LIVE Badge */}
+      {isLive && (
+        <div className="absolute top-3 left-3 z-20" aria-label="Live video">
+          <div className="bg-red-600 text-white px-2 py-1 rounded-md text-xs font-bold flex items-center space-x-1">
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <span>LIVE</span>
+          </div>
+        </div>
+      )}
+
       {/* YouTube iframe - primary video display */}
       <iframe
+        ref={iframeRef}
         src={embedUrl}
         title={title}
         className="w-full h-full relative z-0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
         allowFullScreen
+        frameBorder="0"
         style={{ width: '100%', height: '100%', minHeight: '200px', position: 'relative', zIndex: 0 }}
       />
 
@@ -107,9 +131,10 @@ export function VideoPlayer({
         className={`absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center ${
           showControls ? 'opacity-100' : 'opacity-0'
         }`}
+        aria-hidden="true"
       >
-        <div className="flex items-center space-x-4">
-          {/* Play button overlay */}
+        <div className="flex items-center space-x-4 pointer-events-auto">
+          {/* Play button overlay - just for visual indication */}
           <Button
             variant="ghost"
             size="lg"
@@ -127,8 +152,8 @@ export function VideoPlayer({
           showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
         }`}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+        <div className="flex items-center justify-between pointer-events-auto">
+          <div className="flex items-center space-x-3" aria-hidden="true">
             <Button
               variant="ghost"
               size="sm"
@@ -147,23 +172,12 @@ export function VideoPlayer({
               {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
             </Button>
 
-            <span className="text-white text-sm font-medium truncate max-w-40">
+            <span className="text-white text-sm font-medium truncate max-w-40 whitespace-normal">
               {title}
             </span>
           </div>
 
           <div className="flex items-center space-x-2">
-            {/* Picture-in-Picture */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={togglePiP}
-              className="text-white hover:bg-white hover:bg-opacity-20 p-2"
-              title="Picture-in-Picture"
-            >
-              {isPiP ? <Minimize className="w-4 h-4" /> : <ExternalLink className="w-4 h-4" />}
-            </Button>
-
             {/* Open in YouTube */}
             <Button
               variant="ghost"
@@ -171,6 +185,7 @@ export function VideoPlayer({
               onClick={openYouTube}
               className="text-white hover:bg-white hover:bg-opacity-20 p-2"
               title="Open in YouTube"
+              aria-label="Open video in YouTube"
             >
               <ExternalLink className="w-4 h-4" />
             </Button>
@@ -181,32 +196,12 @@ export function VideoPlayer({
               size="sm"
               onClick={toggleFullscreen}
               className="text-white hover:bg-white hover:bg-opacity-20 p-2"
+              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
             >
               {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
             </Button>
           </div>
         </div>
-      </div>
-
-      {isLive && (
-        <div className="absolute top-3 left-3 z-20 pointer-events-none">
-          <div className="bg-red-600 text-white px-2 py-1 rounded-md text-xs font-bold flex items-center space-x-1">
-            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <span>LIVE</span>
-          </div>
-        </div>
-      )}
-
-      <div className="absolute top-3 right-3 z-20">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={openYouTube}
-          className="bg-black/50 text-white hover:bg-black/70 p-2 pointer-events-auto"
-          title="Open in YouTube"
-        >
-          <ExternalLink className="w-4 h-4" />
-        </Button>
       </div>
     </div>
   );
@@ -223,6 +218,7 @@ export function VideoPlayer({
                 size="sm"
                 onClick={onClose}
                 className="h-8 w-8 p-0"
+                aria-label="Close video"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -263,6 +259,15 @@ export function VideoThumbnail({
     <div 
       className={`relative cursor-pointer group ${className}`}
       onClick={onClick}
+      role="button"
+      tabIndex={0}
+      aria-label={`Play video: ${title}`}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
     >
       <div className="relative overflow-hidden rounded-lg">
         <img
@@ -271,11 +276,9 @@ export function VideoThumbnail({
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           style={{ aspectRatio: '16/9' }}
           onError={(e) => {
-            const target = e.currentTarget as HTMLImageElement;
-            if (!target.dataset.fallback) {
-              target.dataset.fallback = '1';
-              target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-            }
+            // Fallback to default thumbnail if maxresdefault.jpg is not available
+            const target = e.target as HTMLImageElement;
+            target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
           }}
         />
         
@@ -288,7 +291,7 @@ export function VideoThumbnail({
 
         {/* LIVE Badge */}
         {isLive && (
-          <div className="absolute top-2 left-2">
+          <div className="absolute top-2 left-2" aria-label="Live">
             <div className="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold flex items-center space-x-1">
               <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
               <span>LIVE</span>
@@ -307,7 +310,7 @@ export function VideoThumbnail({
       </div>
 
       <div className="mt-2">
-        <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+        <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors whitespace-normal">
           {title}
         </h3>
       </div>

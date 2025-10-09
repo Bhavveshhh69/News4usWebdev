@@ -8,6 +8,7 @@ import { Sidebar } from '../Sidebar';
 import { Link, useRouter } from '../Router';
 import { Calendar, Clock, User, Bookmark, Type, Sun, Moon } from 'lucide-react';
 import { useContent, timeAgoFrom } from '../../store/contentStore';
+import sanitizeHtml from '../../utils/sanitize';
 
 interface ArticlePageProps {
   isDarkMode: boolean;
@@ -26,6 +27,13 @@ export function ArticlePage({ isDarkMode, toggleDarkMode }: ArticlePageProps) {
     const bySlug = articles.find(a => a.slug === params.id);
     return bySlug || articles[0];
   }, [articles, params.id]);
+
+  const cleanHtml = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return article.content || '';
+    }
+    return sanitizeHtml(article.content || '');
+  }, [article.content]);
 
   const relatedArticles = useMemo(() => {
     return articles
@@ -171,7 +179,7 @@ export function ArticlePage({ isDarkMode, toggleDarkMode }: ArticlePageProps) {
             {/* Article Content */}
             <div className={`px-6 pb-6 prose prose-lg max-w-none dark:prose-invert ${fontSizeClasses[fontSize as keyof typeof fontSizeClasses]}`}>
               <div 
-                dangerouslySetInnerHTML={{ __html: article.content || '' }}
+                dangerouslySetInnerHTML={{ __html: cleanHtml }}
                 className="leading-relaxed"
               />
             </div>

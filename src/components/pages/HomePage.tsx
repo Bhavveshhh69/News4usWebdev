@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BreakingNewsTicker } from "../BreakingNewsTicker";
 import { BreakingTicker } from "../BreakingTicker";
 import { HeroCarousel, Slide } from "../HeroCarousel";
@@ -11,6 +11,7 @@ import { Sidebar } from "../Sidebar";
 import { Button } from "../ui/button";
 import { FileText } from 'lucide-react';
 import { useContent, timeAgoFrom } from "../../store/contentStore";
+import { stockData, youtubeVideos, trendingArticles } from '../../data/mock';
 
 interface HomePageProps {
   isDarkMode: boolean;
@@ -69,7 +70,7 @@ export function HomePage({ isDarkMode, isQuickRead, setIsQuickRead }: HomePagePr
           className={`${isQuickRead ? 'bg-red-600 hover:bg-red-700 text-white' : 'hover:bg-red-50 dark:hover:bg-red-900/20'}`}
         >
           <FileText className="w-4 h-4 mr-2" />
-          {isQuickRead ? 'Exit Quick Read Mode' : (homePageContent.quickReadButtonText || 'Quick Read Mode')}
+          {isQuickRead ? 'Exit Quick Read Mode' : homePageContent.quickReadButtonText}
         </Button>
       </div>
 
@@ -88,7 +89,7 @@ export function HomePage({ isDarkMode, isQuickRead, setIsQuickRead }: HomePagePr
             
             <ScrollReveal>
               <CategorySection
-              title={homePageContent.politicsSectionTitle || 'Politics'}
+              title={homePageContent.politicsSectionTitle}
               highlightColor="red"
               articles={politicsArticles}
               isQuickRead={isQuickRead}
@@ -97,7 +98,7 @@ export function HomePage({ isDarkMode, isQuickRead, setIsQuickRead }: HomePagePr
             
             <ScrollReveal delayMs={100}>
               <CategorySection
-              title={homePageContent.healthSectionTitle || 'Health'}
+              title={homePageContent.healthSectionTitle}
               highlightColor="teal"
               articles={healthArticles}
               isQuickRead={isQuickRead}
@@ -106,7 +107,7 @@ export function HomePage({ isDarkMode, isQuickRead, setIsQuickRead }: HomePagePr
             
             <ScrollReveal delayMs={150}>
               <CategorySection
-              title={homePageContent.sportsSectionTitle || 'Sports'}
+              title={homePageContent.sportsSectionTitle}
               highlightColor="green"
               articles={sportsArticles}
               isQuickRead={isQuickRead}
@@ -115,7 +116,7 @@ export function HomePage({ isDarkMode, isQuickRead, setIsQuickRead }: HomePagePr
             
             <ScrollReveal delayMs={200}>
               <CategorySection
-              title={homePageContent.entertainmentSectionTitle || 'Entertainment'}
+              title={homePageContent.entertainmentSectionTitle}
               highlightColor="purple"
               articles={entertainmentArticles}
               isQuickRead={isQuickRead}
@@ -126,7 +127,11 @@ export function HomePage({ isDarkMode, isQuickRead, setIsQuickRead }: HomePagePr
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="sticky top-8">
-              <Sidebar />
+              <Sidebar 
+                stockData={stockData}
+                youtubeVideos={youtubeVideos}
+                trendingArticles={trendingArticles}
+              />
             </div>
           </div>
         </div>

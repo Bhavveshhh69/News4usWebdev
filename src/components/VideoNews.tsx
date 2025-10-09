@@ -5,22 +5,34 @@ import { Play } from 'lucide-react';
 import { useContent } from '../store/contentStore';
 import { extractYouTubeId } from '../utils/youtube';
 
-export function VideoNews() {
-  const [selectedVideo, setSelectedVideo] = useState<any>(null);
-  const { youtubeVideos } = useContent() as any;
+type VideoNewsItem = {
+  id: string | number;
+  title: string;
+  videoId: string;
+  duration: string;
+  views: string;
+  source: string;
+  timeAgo: string;
+  isLive: boolean;
+};
 
-  const videoNews = (youtubeVideos || []).map((v: any, idx: number) => ({
-    id: v.id || idx,
-    title: v.title,
-    videoId: extractYouTubeId(v.videoUrl || ''),
-    duration: '',
-    views: '1.2M',
-    source: 'NEWS4US',
-    timeAgo: 'Recently added',
-    isLive: String(v.title || '').toLowerCase().includes('live')
+export function VideoNews() {
+  const [selectedVideo, setSelectedVideo] = useState<VideoNewsItem | null>(null);
+  const { youtubeVideos } = useContent();
+
+  // Convert all videos from the store to the format expected by the component
+  const videoNews = youtubeVideos.map((video, index) => ({
+    id: `video-${video.id || index}`,
+    title: video.title,
+    videoId: extractYouTubeId(video.videoUrl),
+    duration: "", // This could be fetched from YouTube API in a real app
+    views: "1.2M", // Placeholder
+    source: "NEWS4US", // Placeholder
+    timeAgo: "Recently added", // Placeholder
+    isLive: video.title.toLowerCase().includes('live'), // Simple heuristic
   }));
 
-  const openVideo = (video: any) => {
+  const openVideo = (video: VideoNewsItem) => {
     setSelectedVideo(video);
   };
 
@@ -58,7 +70,7 @@ export function VideoNews() {
             </div>
             
             <div className="p-4">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors whitespace-normal">
                 {video.title}
               </h3>
               

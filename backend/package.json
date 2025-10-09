@@ -4,12 +4,34 @@
   "description": "Backend for fetching stock data",
   "main": "server.js",
   "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test:db": "node test-db-connection.js",
+    "test:db-ops": "node test-db-operations.js",
+    "test:health": "node test-health-check.js",
+    "test:env": "node test-env-validation.js",
+    "test:phase1": "node test-phase1.js",
+    "test:auth": "node test-auth-service.js",
+    "test:security": "node test-security.js",
+    "test:phase2": "node test-phase2.js",
+    "test:stock": "node test-stock-api.js",
+    "test:stock-enhanced": "node test-stock-api-enhanced.js",
+    "migrate": "node migrations/run-migration.js"
   },
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
     "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.3",
     "yahoo-finance2": "^2.11.3"
+  },
+  "devDependencies": {
+    "axios": "^1.12.2",
+    "node-fetch": "^3.3.2"
   }
 }

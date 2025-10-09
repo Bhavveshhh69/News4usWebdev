@@ -9,6 +9,7 @@ import { ErrorPage } from "./components/ErrorPage";
 import { Toaster } from "./components/ui/sonner";
 import { ReadingProgress } from "./components/ReadingProgress";
 import { ContentProvider } from "./store/contentStore";
+import { NavigationItem } from './types';
 
 // Import pages
 import { HomePage } from "./components/pages/HomePage";
@@ -20,6 +21,24 @@ import { AuthPage } from "./components/pages/AuthPage";
 import { AboutPage } from "./components/pages/AboutPage";
 import { EPaperPage } from "./components/pages/EPaperPage";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { TestPage } from "./components/TestPage"; // Added test page
+
+const LOGO_PATH = './assets/Newlogo.jpeg';
+const BRAND_IMAGE_PATH = './assets/e465bbd90453757b67bdbd6f68b53e083c3b6284.png';
+
+const newsLogo = new URL(LOGO_PATH, import.meta.url).href;
+const brandImage = new URL(BRAND_IMAGE_PATH, import.meta.url).href;
+
+const NAVIGATION_ITEMS: NavigationItem[] = [
+  { name: 'Home', path: '/' },
+  { name: 'News', path: '/category' },
+  { name: 'Politics', path: '/politics' },
+  { name: 'Health', path: '/health' },
+  { name: 'Sports', path: '/sports' },
+  { name: 'Entertainment', path: '/entertainment' },
+  { name: 'About Us', path: '/about' },
+  { name: 'E-Paper', path: '/e-paper' }
+];
 
 function AppLayout() {
   const { currentRoute } = useRouter();
@@ -36,24 +55,22 @@ function AppLayout() {
     document.documentElement.classList.add('dark');
   }, []);
 
-  // Render admin pages outside the main layout
-  if (currentRoute.startsWith('/admin')) {
-    return (
-      <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 ${isDarkMode ? 'dark' : ''}`}>
-        <ErrorBoundary>
-          <Route path="/admin-login" exact component={AdminLoginPage} />
-          <Route path="/admin" exact component={AdminDashboard} />
-        </ErrorBoundary>
-        <Toaster />
-      </div>
-    );
-  }
-
   // Render the main website layout
   return (
     <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 ${isDarkMode ? 'dark' : ''}`}>
       <ReadingProgress className="z-[60]" />
-      <Header isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} showThemeToggle={false} />
+      
+      {/* Render header only for non-admin pages */}
+      {!currentRoute.startsWith('/admin') && (
+        <Header
+          isDarkMode={isDarkMode}
+          toggleDarkMode={toggleDarkMode}
+          showThemeToggle={false}
+          logoSrc={newsLogo}
+          brandImageSrc={brandImage}
+          navigationItems={NAVIGATION_ITEMS}
+        />
+      )}
       
       {/* Router Routes */}
       <Route path="/" exact component={() => (
@@ -110,18 +127,29 @@ function AppLayout() {
       <Route path="/e-paper" exact component={EPaperPage} />
       <Route path="/auth" exact component={AuthPage} />
       
+      {/* Admin Routes */}
+      <Route path="/admin-login" exact component={AdminLoginPage} />
+      <Route path="/admin" exact component={AdminDashboard} />
+      
+      {/* Test Page Route */}
+      <Route path="/test" exact component={TestPage} />
+      
       {/* 404 Error Page - Default route */}
       <Route path="/404" exact component={() => <ErrorPage />} />
 
-      <Footer />
-      <LiveVideoFloat />
-      <BackToTop />
-      
-      {/* Floating Social Share */}
-      <SocialShare 
-        variant="floating"
-        className="hidden xl:block"
-      />
+      {!currentRoute.startsWith('/admin') && (
+        <>
+          <Footer />
+          <LiveVideoFloat />
+          <BackToTop />
+          
+          {/* Floating Social Share */}
+          <SocialShare 
+            variant="floating"
+            className="hidden xl:block"
+          />
+        </>
+      )}
       
       <Toaster />
     </div>

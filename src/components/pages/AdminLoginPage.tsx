@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Link, useRouter } from '../Router';
 import { Shield, Eye, EyeOff, UserCheck } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 type UserRole = 'admin' | 'editor' | 'viewer';
 
@@ -53,7 +53,7 @@ export function AdminLoginPage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleLogin = async (e: any) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -71,8 +71,7 @@ export function AdminLoginPage() {
       localStorage.setItem('adminUser', JSON.stringify(user));
       navigate('/admin');
     } else {
-      // Generic error message to prevent user enumeration attacks
-      toast.error('Invalid credentials');
+      toast.error('Invalid credentials or role selection');
     }
 
     setIsLoading(false);
@@ -111,10 +110,12 @@ export function AdminLoginPage() {
           <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <Shield className="w-8 h-8 text-red-600 dark:text-red-400" />
           </div>
-          <a href="/" className="text-2xl font-bold cursor-pointer">
-            <span className="text-red-600">NEWS</span>
-            <span className="text-gray-900 dark:text-white">4US</span>
-          </a>
+          <Link to="/">
+            <h1 className="text-2xl font-bold cursor-pointer">
+              <span className="text-red-600">NEWS</span>
+              <span className="text-gray-900 dark:text-white">4US</span>
+            </h1>
+          </Link>
           <CardTitle>Admin Portal</CardTitle>
           <CardDescription>Secure access for authorized personnel only</CardDescription>
         </CardHeader>
@@ -208,21 +209,23 @@ export function AdminLoginPage() {
             </Button>
           </form>
 
-          {/* Information section without hardcoded credentials */}
+          {/* Demo Credentials */}
           <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-            <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Admin Access</h4>
-            <p className="text-xs text-gray-600 dark:text-gray-300">
-              Contact your system administrator for login credentials.
-            </p>
+            <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Demo Credentials:</h4>
+            <div className="space-y-1 text-xs text-gray-600 dark:text-gray-300">
+              <div><strong>Admin:</strong> admin@news4us.com / admin123</div>
+              <div><strong>Editor:</strong> editor@news4us.com / editor123</div>
+              <div><strong>Viewer:</strong> viewer@news4us.com / viewer123</div>
+            </div>
           </div>
 
           <div className="mt-6 text-center">
-            <a 
-              href="/auth" 
+            <Link 
+              to="/auth" 
               className="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
             >
               Regular User Login
-            </a>
+            </Link>
           </div>
         </CardContent>
       </Card>
