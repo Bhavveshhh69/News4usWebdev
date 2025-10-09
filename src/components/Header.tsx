@@ -4,13 +4,6 @@ import { Menu, X, Moon, Sun, Newspaper } from 'lucide-react';
 import { Link, useRouter } from './Router';
 const RLink: any = Link;
 
-// Primary: use bundler-managed asset URLs so Vite includes them in the build
-const LOGO_PATH = '../assets/Newlogo.jpeg';
-const BRAND_IMAGE_PATH = '../assets/e465bbd90453757b67bdbd6f68b53e083c3b6284.png';
-
-const newsLogo = new URL(LOGO_PATH, import.meta.url).href;
-const brandImage = new URL(BRAND_IMAGE_PATH, import.meta.url).href;
-
 interface HeaderProps {
   isDarkMode: boolean;
   toggleDarkMode: () => void;
@@ -31,15 +24,14 @@ const NAVIGATION_ITEMS = [
 export function Header({ isDarkMode, toggleDarkMode, showThemeToggle = false }: HeaderProps) {
   const { currentRoute } = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [logoSrc, setLogoSrc] = useState(newsLogo);
+  const [logoSrc, setLogoSrc] = useState('/Newlogo.jpeg');
 
   // Function to handle logo loading errors
   const handleLogoError = () => {
     // Try alternative logo paths in order of preference
     const fallbackLogos = [
-      '/news-logo.jpg',
       '/logo.png',
-      '/logo.svg'
+      '/news-logo.jpg'
     ];
     
     // If we haven't tried all fallbacks yet, try the next one
@@ -58,7 +50,7 @@ export function Header({ isDarkMode, toggleDarkMode, showThemeToggle = false }: 
             <img 
               src={logoSrc} 
               alt="NEWS4US Official Logo" 
-              onError={() => { if (logoSrc !== '/assets/Newlogo.jpeg') setLogoSrc('/assets/Newlogo.jpeg'); }}
+              onError={handleLogoError}
               className="h-12 sm:h-14 md:h-16 lg:h-20 xl:h-24 w-auto object-contain shrink-0"
             />
             <RLink to="/">
@@ -73,7 +65,7 @@ export function Header({ isDarkMode, toggleDarkMode, showThemeToggle = false }: 
           <nav className="hidden lg:flex justify-center lg:text-lg xl:text-xl">
             <div className="flex items-center">
               {NAVIGATION_ITEMS.map((item, index) => (
-                <React.Fragment key={item.name}>
+                <>
                   <RLink
                     to={item.path}
                     className={`transition-colors duration-300 flex items-center whitespace-nowrap font-medium px-3 py-2 rounded-md mx-1 ${
@@ -90,7 +82,7 @@ export function Header({ isDarkMode, toggleDarkMode, showThemeToggle = false }: 
                   {index < NAVIGATION_ITEMS.length - 1 && (
                     <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
                   )}
-                </React.Fragment>
+                </>
               ))}
             </div>
           </nav>
@@ -100,9 +92,9 @@ export function Header({ isDarkMode, toggleDarkMode, showThemeToggle = false }: 
             {/* Brand/Sponsor Section - Hidden on smaller screens */}
             <div className="hidden xl:flex items-center">
               <img 
-                src={brandImage} 
+                src="/brand.png" 
                 alt="NEWS4US Brand Image" 
-                onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/assets/e465bbd90453757b67bdbd6f68b53e083c3b6284.png'; }}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/e465bbd90453757b67bdbd6f68b53e083c3b6284.png'; }}
                 className="h-14 xl:h-16 w-auto object-contain"
               />
             </div>

@@ -21,12 +21,22 @@ export function LiveMarketUpdates() {
       setError(null);
       try {
         setLoading(true);
-        // Use a relative path for the API endpoint to work in different environments
-        const response = await fetch('/api/stocks');
+        // Use the API base URL from environment variables
+        const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || '/api';
+        const response = await fetch(`${API_BASE}/stocks`);
+        
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+          let errorMessage = `HTTP error! status: ${response.status}`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          } catch (e) {
+            // If we can't parse the error response, use the status text
+            errorMessage = response.statusText || errorMessage;
+          }
+          throw new Error(errorMessage);
         }
+        
         const data = await response.json();
         setMarketData(data);
       } catch (error: any) {
@@ -77,6 +87,7 @@ export function LiveMarketUpdates() {
         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
           <p className="font-bold">Error</p>
           <p>{error}</p>
+          <p className="mt-2 text-sm">Please ensure the backend server is running on port 4002.</p>
         </div>
       )}
 

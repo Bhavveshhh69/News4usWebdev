@@ -188,6 +188,12 @@ const seedYouTubeVideos: YouTubeVideo[] = [
 ];
 
 const STORAGE_KEY = 'contentStore_v1';
+const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || '/api';
+
+// Fallback for development when env var is not set
+const FALLBACK_API_BASE = (import.meta as any).env?.MODE === 'development' 
+  ? '/api' 
+  : 'https://news4uswebdev.onrender.com/api';
 
 const ContentContext = createContext(null as any);
 

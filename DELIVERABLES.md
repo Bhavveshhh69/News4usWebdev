@@ -1,3 +1,31 @@
+# Deliverables for NEWS4US Hostinger Deployment
+
+## 1. Files Changed with Diffs
+
+### vite.config.ts
+Changed the base configuration from `'./'` to `'/'`:
+```diff
+- base: './', // Old configuration
++ base: '/', // Changed from './' to '/' for absolute asset paths
+```
+
+### src/store/contentStore.tsx
+Updated API base URL to use Vite environment variables:
+```diff
+- const API_BASE = 'https://news4uswebdev.onrender.com/api'; // Old hardcoded URL
++ const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || '/api'; // New environment variable approach
+```
+
+### src/components/LiveMarketUpdates.tsx
+Updated API base URL to use Vite environment variables:
+```diff
+- const API_BASE = 'https://news4uswebdev.onrender.com/api'; // Old hardcoded URL
++ const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || '/api'; // New environment variable approach
+```
+
+## 2. Final vite.config.ts Content
+
+```typescript
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
@@ -59,12 +87,12 @@ export default defineConfig({
     host: '0.0.0.0',
     port: process.env.PORT ? parseInt(process.env.PORT) : 3001,
     open: true,
-    // Proxy API requests to the local backend server during development
+    // Proxy API requests to the deployed backend server
     proxy: {
       '/api': {
-        target: 'http://localhost:4002',
+        target: 'https://news4uswebdev.onrender.com',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
     },
   },
@@ -73,3 +101,83 @@ export default defineConfig({
     port: process.env.PORT ? parseInt(process.env.PORT) : 3001,
   },
 });
+```
+
+## 3. Logo Storage and References
+
+Logo files are stored in the `public/` folder:
+- `public/logo.png`
+- `public/brand.png`
+
+These assets are referenced in the code with root-absolute paths:
+- In HTML: `<img src="/logo.png" alt="NEWS4US Official Logo">`
+- In React components: `import logo from '/logo.png';`
+
+## 4. Environment Variables
+
+### .env.production
+```
+VITE_API_BASE_URL=https://news4uswebdev.onrender.com/api
+```
+
+### .env.local
+```
+VITE_API_BASE_URL=http://localhost:4002/api
+```
+
+All API calls now use the environment variable:
+```typescript
+const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || '/api';
+```
+
+## 5. .htaccess Configuration
+
+### public/.htaccess
+```
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  # Serve existing files/folders
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+  # Everything else -> index.html (SPA fallback)
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# Optional: long-cache hashed assets
+<FilesMatch "\.(js|css|png|jpg|jpeg|gif|svg|woff2?)$">
+  <IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 1 year"
+  </IfModule>
+  <IfModule mod_headers.c>
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </IfModule>
+</FilesMatch>
+```
+
+### Confirmation in dist/
+Verified that `dist/.htaccess` exists after build with the same content.
+
+## 6. Build and Preview Verification
+
+- ✅ `npm run build` completes successfully in approximately 15-23 seconds
+- ✅ `dist/` folder contains all required files:
+  - `index.html`
+  - `assets/` folder with hashed JavaScript and CSS files
+  - `.htaccess` file
+  - Static assets (`logo.png`, `brand.png`)
+- ✅ Asset paths in generated files use root-absolute paths (`/assets/...`)
+- ✅ Preview server runs successfully (`npm start` or `vite preview`)
+- ✅ Both home page (`/`) and admin page (`/admin`) load without 404 errors
+- ✅ All static assets load correctly
+- ✅ Logo renders properly at both `/` and `/admin` routes
+
+## 7. Deployment Guide
+
+See `DEPLOYMENT-GUIDE.md` for detailed deployment instructions to Hostinger.
+
+## 8. Final Report
+
+See `FINAL-REPORT.md` for a comprehensive overview of all changes made and verification results.
