@@ -23,8 +23,8 @@ import { EPaperPage } from "./components/pages/EPaperPage";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { TestPage } from "./components/TestPage"; // Added test page
 
-const LOGO_PATH = './assets/Newlogo.jpeg';
-const BRAND_IMAGE_PATH = './assets/e465bbd90453757b67bdbd6f68b53e083c3b6284.png';
+const LOGO_PATH = '/logo.png';
+const BRAND_IMAGE_PATH = '/brand.png';
 
 const newsLogo = new URL(LOGO_PATH, import.meta.url).href;
 const brandImage = new URL(BRAND_IMAGE_PATH, import.meta.url).href;

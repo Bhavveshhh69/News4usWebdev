@@ -4,7 +4,7 @@ import { Input } from "./ui/input";
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { Play, TrendingUp } from 'lucide-react';
 // @ts-ignore - Ignore TypeScript error for sonner import
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 import { StockData, YouTubeVideo, TrendingArticle } from '../types';
 
 interface SidebarProps {

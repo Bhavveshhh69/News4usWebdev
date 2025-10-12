@@ -4,6 +4,7 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  base: '/', // ✅ CRITICAL for Hostinger deployment - ensures absolute asset paths
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
     alias: { '@': path.resolve(__dirname, './src') },

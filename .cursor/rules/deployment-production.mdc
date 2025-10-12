@@ -1,0 +1,342 @@
+---
+alwaysApply: false
+description: "Production deployment configuration and environment setup"
+globs: "*deploy*,*production*,*env*,*config*"
+---
+
+# Production Deployment Guide
+
+## 🚀 NEWS4US Production Architecture
+
+Complete deployment configuration for production-ready news website with enterprise-grade security and performance.
+
+## Environment Configuration
+
+### Production Environment Variables
+```bash
+# backend/.env (Production)
+DB_HOST=aws-1-ap-south-1.pooler.supabase.com
+DB_PORT=5432
+DB_NAME=postgres
+DB_USER=postgres.hfymcyzedgdapbtwonwt
+DB_PASSWORD=Bhavv@1127
+DB_SSL=true
+
+# Security settings
+JWT_SECRET=news4us_jwt_secret_key_production_2025
+NODE_ENV=production
+
+# Role configurations (production)
+DB_APP_USER=news_app_user
+DB_READ_ONLY_USER=news_read_user
+DB_ADMIN_USER=news_admin_user
+DB_AUDIT_USER=news_audit_user
+```
+
+### Frontend Production Config
+```bash
+# .env.production (Frontend)
+VITE_API_BASE_URL=https://news4us.in/api
+```
+
+### Local Development Config
+```bash
+# .env.local (Frontend)
+VITE_API_BASE_URL=http://localhost:4002/api
+
+# backend/.env (Development)
+DB_HOST=localhost
+DB_SSL=false
+NODE_ENV=development
+```
+
+## Deployment Architecture
+
+### Three-Tier Architecture
+1. **Frontend:** React SPA deployed to Hostinger
+2. **Backend:** Node.js API server on production server
+3. **Database:** Supabase PostgreSQL with connection pooling
+
+### SSL/TLS Configuration
+- **Frontend:** HTTPS enforced by Hostinger
+- **Backend:** HTTPS with SSL certificates
+- **Database:** SSL encryption for all connections
+
+## Deployment Process
+
+### Backend Deployment
+```bash
+# 1. Install production dependencies
+cd backend
+npm ci  # Clean install for production
+
+# 2. Set production environment
+export NODE_ENV=production
+
+# 3. Start with PM2 (recommended)
+pm2 start server.js --name "news4us-backend"
+pm2 save
+pm2 startup
+
+# 4. Configure reverse proxy (nginx)
+# See DEPLOYMENT-GUIDE.md for nginx config
+```
+
+### Frontend Deployment
+```bash
+# 1. Build for production
+cd frontend
+npm run build
+
+# 2. Deploy to Hostinger public_html
+# Upload dist/ folder contents to public_html/
+
+# 3. Configure .htaccess for SPA routing
+# File already configured in public/.htaccess
+```
+
+### Database Deployment
+```bash
+# 1. Run production migrations
+cd backend
+NODE_ENV=production node migrations/run-migration.js
+
+# 2. Seed production data
+NODE_ENV=production node seed-database.js
+
+# 3. Verify connections
+NODE_ENV=production npm run test:db
+```
+
+## Security Hardening
+
+### HTTP-only Cookies (Production)
+```javascript
+// backend/server.js - Production CORS
+app.use(cors({
+  origin: ['https://news4us.in', 'https://www.news4us.in'],
+  credentials: true  // Required for cookies
+}));
+
+// Cookie settings
+res.cookie('auth_token', token, {
+  httpOnly: true,     // ✅ XSS protection
+  secure: true,       // ✅ HTTPS only
+  sameSite: 'strict', // ✅ CSRF protection
+  maxAge: 24 * 60 * 60 * 1000
+});
+```
+
+### SSL Certificate Configuration
+```javascript
+// backend/config/database.js - Production SSL
+ssl: {
+  rejectUnauthorized: false  // Accept Supabase self-signed cert
+}
+```
+
+### Environment Security
+```bash
+# Production .env security
+chmod 600 backend/.env  # Owner read/write only
+# Never commit .env files to version control
+```
+
+## Performance Optimization
+
+### Connection Pooling
+```javascript
+// backend/config/database.js
+const appUserPool = new Pool({
+  max: 20,  // Production connection limit
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000
+});
+```
+
+### Caching Strategy
+```javascript
+// Redis configuration (when available)
+const redis = new Redis({
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+  password: process.env.REDIS_PASSWORD
+});
+```
+
+### CDN Configuration
+```bash
+# Hostinger static asset optimization
+# Assets served from /assets/ with long cache headers
+# Logo and brand images served from root domain
+```
+
+## Monitoring & Logging
+
+### Application Monitoring
+```bash
+# PM2 monitoring
+pm2 monit
+pm2 logs news4us-backend
+
+# Application metrics
+# TODO: Implement application performance monitoring
+```
+
+### Database Monitoring
+```sql
+-- Monitor connection counts
+SELECT count(*) FROM pg_stat_activity WHERE datname = 'postgres';
+
+-- Monitor slow queries
+SELECT query, calls, total_time FROM pg_stat_statements
+ORDER BY total_time DESC LIMIT 10;
+```
+
+### Security Monitoring
+```sql
+-- Monitor audit log for suspicious activity
+SELECT * FROM app_audit_log
+WHERE action IN ('login_failed', 'unauthorized_access')
+ORDER BY created_at DESC;
+```
+
+## Backup Strategy
+
+### Database Backups
+```bash
+# Automated daily backups (configure in Supabase dashboard)
+# Point-in-time recovery enabled
+# Backup retention: 7 days
+```
+
+### Application Backups
+```bash
+# Version control for code
+git tag production-$(date +%Y%m%d-%H%M%S)
+
+# Configuration backups
+cp backend/.env backend/.env.backup.$(date +%Y%m%d)
+```
+
+## Troubleshooting
+
+### Common Production Issues
+
+#### 1. Port Conflicts
+```bash
+# Check if port 4002 is in use
+netstat -ano | findstr :4002
+
+# Kill conflicting process
+taskkill /PID <PID> /F
+
+# Alternative: Use different port
+PORT=4003 npm start
+```
+
+#### 2. SSL Certificate Issues
+```bash
+# Test SSL connection
+openssl s_client -connect aws-1-ap-south-1.pooler.supabase.com:5432
+
+# Verify certificate acceptance in code
+# { rejectUnauthorized: false } is set correctly
+```
+
+#### 3. Environment Variables
+```bash
+# Verify .env file exists and is readable
+ls -la backend/.env
+
+# Check environment loading
+node -e "console.log(process.env.DB_HOST)"
+
+# Never log sensitive data in production
+```
+
+#### 4. Memory Issues
+```bash
+# Monitor memory usage
+pm2 monit
+
+# Check for memory leaks
+# Implement proper connection cleanup
+# Monitor large data structures
+```
+
+## Rollback Procedures
+
+### Emergency Rollback
+```bash
+# 1. Stop current deployment
+pm2 stop news4us-backend
+
+# 2. Deploy previous version
+git checkout previous-commit
+npm ci
+pm2 restart news4us-backend
+
+# 3. Database rollback (if needed)
+# Use Supabase point-in-time recovery
+```
+
+### Gradual Rollback
+```bash
+# Rollback specific components
+# 1. Authentication system
+# 2. Database schema changes
+# 3. Frontend features
+```
+
+## Health Checks
+
+### Application Health
+```bash
+# Backend health endpoint
+curl https://news4us.in/api/health
+
+# Database connectivity
+cd backend && NODE_ENV=production npm run test:db
+
+# Frontend SPA routing
+curl https://news4us.in/ | grep -q "React" && echo "✅ Frontend OK"
+```
+
+### Security Health
+```bash
+# Cookie security test
+curl -c cookies.txt https://news4us.in/api/auth/login
+curl -b cookies.txt https://news4us.in/api/articles | grep -q "articles"
+
+# SSL certificate validation
+openssl s_client -connect news4us.in:443 -servername news4us.in
+```
+
+## Performance Benchmarks
+
+### Target Metrics
+- **Response Time:** <100ms for API calls
+- **Database Query:** <50ms for simple queries
+- **Page Load:** <2s for frontend
+- **Uptime:** 99.9% availability
+
+### Monitoring Tools
+- **PM2:** Process monitoring and auto-restart
+- **Supabase:** Database performance metrics
+- **Hostinger:** Server resource monitoring
+- **Custom:** Application-specific metrics
+
+## Future Enhancements
+
+### Scalability
+- **Load Balancing:** Multiple backend instances
+- **CDN Integration:** Global asset delivery
+- **Database Read Replicas:** Improved read performance
+- **Caching Layer:** Redis for session and data caching
+
+### Security Enhancements
+- **Rate Limiting:** Advanced DDoS protection
+- **WAF:** Web Application Firewall
+- **Audit Logging:** Enhanced security monitoring
+- **Compliance:** GDPR and data protection features

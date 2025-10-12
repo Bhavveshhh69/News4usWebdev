@@ -90,43 +90,45 @@ export function AdminDashboard() {
   ];
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('adminUser');
-    if (storedUser) {
-      setCurrentUser(JSON.parse(storedUser));
-    } else {
-      // Try to get user from token
-      const token = localStorage.getItem('token');
-      if (token) {
-        // Validate token and get user info
-        fetch('/api/auth/validate', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            const adminUser = {
-              email: data.user.email,
-              role: data.user.role,
-              name: data.user.name
-            };
-            setCurrentUser(adminUser);
-            localStorage.setItem('adminUser', JSON.stringify(adminUser));
-          } else {
-            navigate('/admin-login');
-          }
-        })
-        .catch(() => {
+    // Check if user is authenticated via cookies
+    fetch('/api/auth/me') // New endpoint to get current user from cookie
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Not authenticated');
+        }
+      })
+      .then(data => {
+        if (data.success) {
+          const adminUser = {
+            email: data.user.email,
+            role: data.user.role,
+            name: data.user.name
+          };
+          setCurrentUser(adminUser);
+          localStorage.setItem('adminUser', JSON.stringify(adminUser));
+        } else {
           navigate('/admin-login');
-        });
-      } else {
+        }
+      })
+      .catch(() => {
         navigate('/admin-login');
-      }
-    }
+      });
   }, [navigate]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: 'current' }) // We'll need to implement session tracking
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+
     localStorage.removeItem('adminUser');
-    localStorage.removeItem('token');
     toast.success('Logged out successfully');
     navigate('/admin-login');
   };

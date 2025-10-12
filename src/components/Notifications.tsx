@@ -1,5 +1,5 @@
 import React from 'react';
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 
 // Toast Notification Types
 export type ToastType = 'success' | 'error' | 'warning' | 'info';

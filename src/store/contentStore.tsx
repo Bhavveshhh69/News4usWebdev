@@ -222,9 +222,8 @@ const seedArticles: ArticleItem[] = [
 ];
 
 const STORAGE_KEY = 'contentStore_v1';
-const API_BASE = process.env.NODE_ENV === 'production' 
-  ? 'https://newsauswebdev.onrender.com/api' 
-  : '/api';
+// ✅ ROBUST: Use Vite environment variables for production-ready configuration
+const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || '/api';
 
 const ContentContext = createContext(null as any);
 
@@ -250,20 +249,12 @@ export function ContentProvider({ children }: { children?: any }) {
     try {
       setIsLoading(true);
       setError(null);
-      
-      // Try to get token from localStorage
-      const token = localStorage.getItem('token');
-      if (!token) {
-        // If no token, load from localStorage as fallback
-        loadFromLocalStorage();
-        return;
-      }
 
-      // Fetch articles
+      // Cookies are sent automatically - no need for token retrieval
+
+      // Fetch articles with automatic cookie authentication
       try {
-        const articlesResponse = await fetch(`${API_BASE}/articles`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const articlesResponse = await fetch(`${API_BASE}/articles`);
         if (articlesResponse.ok) {
           const articlesData = await articlesResponse.json();
           // Transform backend data to match frontend structure
@@ -297,9 +288,7 @@ export function ContentProvider({ children }: { children?: any }) {
 
       // Fetch categories
       try {
-        const categoriesResponse = await fetch(`${API_BASE}/categories`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const categoriesResponse = await fetch(`${API_BASE}/categories`);
         // Handle categories if needed
       } catch (err) {
         console.error('Failed to fetch categories:', err);
@@ -307,9 +296,7 @@ export function ContentProvider({ children }: { children?: any }) {
 
       // Fetch tags
       try {
-        const tagsResponse = await fetch(`${API_BASE}/tags`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const tagsResponse = await fetch(`${API_BASE}/tags`);
         // Handle tags if needed
       } catch (err) {
         console.error('Failed to fetch tags:', err);
@@ -444,11 +431,6 @@ export function ContentProvider({ children }: { children?: any }) {
 
   const addArticle = async (a: ArticleItem) => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Not authenticated');
-      }
-
       // Transform frontend data to backend format
       const backendArticle = {
         title: a.title,
@@ -463,8 +445,8 @@ export function ContentProvider({ children }: { children?: any }) {
       const response = await fetch(`${API_BASE}/articles`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
+          // Authorization handled by HTTP-only cookies
         },
         body: JSON.stringify(backendArticle)
       });
@@ -510,11 +492,6 @@ export function ContentProvider({ children }: { children?: any }) {
 
   const updateArticle = async (a: ArticleItem) => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Not authenticated');
-      }
-
       // Transform frontend data to backend format
       const backendArticle = {
         title: a.title,
@@ -529,8 +506,8 @@ export function ContentProvider({ children }: { children?: any }) {
       const response = await fetch(`${API_BASE}/articles/${a.id}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
+          // Authorization handled by HTTP-only cookies
         },
         body: JSON.stringify(backendArticle)
       });
@@ -571,16 +548,9 @@ export function ContentProvider({ children }: { children?: any }) {
 
   const deleteArticle = async (id: string) => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('Not authenticated');
-      }
-
       const response = await fetch(`${API_BASE}/articles/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        method: 'DELETE'
+        // Authorization handled by HTTP-only cookies
       });
 
       if (response.ok) {

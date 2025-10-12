@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '../ui/input-otp';
 import { Link } from '../Router';
 import { Mail, Phone, Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 type AuthStep = 'login' | 'signup' | 'forgot-password' | 'otp-verification' | 'success';
 type AuthMode = 'email' | 'phone';

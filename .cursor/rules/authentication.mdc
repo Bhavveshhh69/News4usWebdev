@@ -1,0 +1,161 @@
+---
+alwaysApply: false
+description: "Authentication system implementation with HTTP-only cookies"
+globs: "*auth*,*login*,*cookie*"
+---
+
+# Authentication System Guide
+
+## 🔐 HTTP-only Cookie Authentication
+
+NEWS4US implements enterprise-grade authentication using HTTP-only cookies instead of localStorage for maximum security.
+
+## Architecture
+
+### Backend Authentication Flow
+1. **Login Request:** [backend/routes/authRoutes.js](mdc:backend/routes/authRoutes.js)
+   - Validates credentials
+   - Generates JWT token
+   - Sets HTTP-only cookie with token
+   - Returns user data (without token)
+
+2. **Cookie Configuration:**
+   ```javascript
+   res.cookie('auth_token', token, {
+     httpOnly: true,        // Prevents XSS attacks
+     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+     sameSite: 'strict',    // CSRF protection
+     maxAge: 24 * 60 * 60 * 1000, // 24 hours
+     path: '/'              // Available for all routes
+   });
+   ```
+
+3. **Middleware Validation:** [backend/middleware/authMiddleware.js](mdc:backend/middleware/authMiddleware.js)
+   - Extracts token from `req.cookies.auth_token`
+   - Validates JWT token
+   - Attaches user to request object
+
+### Frontend Authentication Flow
+1. **API Calls:** [src/store/contentStore.tsx](mdc:src/store/contentStore.tsx)
+   - Cookies sent automatically by browser
+   - No Authorization headers needed
+   - No localStorage token management
+
+2. **Admin Dashboard:** [src/components/pages/AdminDashboard.tsx](mdc:src/components/pages/AdminDashboard.tsx)
+   - Uses `/api/auth/me` endpoint to get current user
+   - Handles authentication state via cookies
+
+## Security Benefits
+
+### ✅ XSS Protection
+- HTTP-only cookies cannot be accessed by JavaScript
+- Tokens never exposed to client-side code
+- Prevents token theft via XSS attacks
+
+### ✅ CSRF Protection
+- SameSite=strict prevents cross-site request forgery
+- CORS configured with credentials enabled
+- Secure cookie flags in production
+
+### ✅ Session Management
+- 24-hour token expiration
+- Automatic cookie cleanup on logout
+- Database-backed session tracking
+
+## Implementation Details
+
+### Cookie Extraction
+```javascript
+// In middleware
+const token = req.cookies?.auth_token;
+if (!token) {
+  return res.status(401).json({ error: 'Authentication required' });
+}
+```
+
+### Frontend Usage
+```typescript
+// API calls - cookies sent automatically
+const response = await fetch('/api/articles');
+// No Authorization headers needed
+```
+
+### Logout Process
+```javascript
+// Backend clears cookie
+res.clearCookie('auth_token', {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
+  path: '/'
+});
+```
+
+## Migration from localStorage
+
+### Before (Insecure)
+```javascript
+// Stored token in localStorage
+localStorage.setItem('token', jwtToken);
+
+// Sent in headers
+headers: { 'Authorization': `Bearer ${token}` }
+```
+
+### After (Secure)
+```javascript
+// Token stored in HTTP-only cookie (automatic)
+// No headers needed - cookies sent automatically
+```
+
+## Testing Authentication
+
+### Manual Testing
+1. **Login:** Check browser cookies for `auth_token`
+2. **API Calls:** Verify requests work without Authorization headers
+3. **Admin Access:** Confirm `/admin` routes load correctly
+4. **Logout:** Verify cookie is cleared
+
+### Automated Testing
+```bash
+# Start test server
+node backend/test-cookie-auth.js
+
+# Test endpoints:
+# POST /api/auth/login  - Sets cookie
+# GET  /api/articles    - Uses cookie auth
+# POST /api/auth/logout - Clears cookie
+```
+
+## Environment Configuration
+
+### Production Settings
+- **Secure Cookies:** HTTPS only
+- **Domain:** news4us.in
+- **SSL:** Required for all connections
+
+### Development Settings
+- **Insecure Cookies:** HTTP allowed
+- **Localhost:** Development domain
+- **No SSL:** For local development
+
+## Troubleshooting
+
+### Common Issues
+1. **Port Conflicts:** Kill process on port 4002
+   ```bash
+   netstat -ano | findstr :4002
+   taskkill /PID <PID> /F
+   ```
+
+2. **Cookie Not Set:** Check CORS configuration
+   ```javascript
+   cors({
+     origin: ['http://localhost:3001'],
+     credentials: true
+   })
+   ```
+
+3. **Token Expired:** Implement refresh mechanism
+   - Check token expiration in middleware
+   - Redirect to login on expiration

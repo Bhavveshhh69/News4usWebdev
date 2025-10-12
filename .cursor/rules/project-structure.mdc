@@ -1,0 +1,102 @@
+---
+alwaysApply: true
+description: "Project structure and architecture overview for NEWS4US"
+globs: "*"
+---
+
+# NEWS4US Project Structure Guide
+
+## Overview
+NEWS4US is a full-stack news website application with modern architecture, enterprise-grade security, and production-ready deployment.
+
+## Architecture Overview
+
+### Frontend (React + TypeScript + Vite)
+- **Entry Point:** [src/App.tsx](mdc:src/App.tsx) - Main application component with routing
+- **State Management:** [src/store/contentStore.tsx](mdc:src/store/contentStore.tsx) - React Context for global state
+- **Components:** [src/components/](mdc:src/components/) - Modular UI components with Radix UI
+- **Pages:** [src/components/pages/](mdc:src/components/pages/) - Route-specific page components
+- **Styling:** Tailwind CSS with dark mode support
+- **Build:** Vite for fast development and optimized production builds
+
+### Backend (Node.js + Express + PostgreSQL)
+- **Entry Point:** [backend/server.js](mdc:backend/server.js) - Express server with middleware and routes
+- **Database:** [backend/config/database.js](mdc:backend/config/database.js) - PostgreSQL connection pools
+- **Authentication:** [backend/middleware/authMiddleware.js](mdc:backend/middleware/authMiddleware.js) - HTTP-only cookie authentication
+- **Routes:** [backend/routes/](mdc:backend/routes/) - RESTful API endpoints
+- **Services:** [backend/services/](mdc:backend/services/) - Business logic layer
+- **Security:** [backend/config/security.js](mdc:backend/config/security.js) - Password hashing and JWT handling
+
+## Key Features
+
+### 🔐 Authentication System
+- **HTTP-only Cookies** - Bulletproof XSS protection
+- **bcryptjs** - Pure JavaScript password hashing (no native compilation)
+- **JWT Tokens** - Stateless authentication with 24-hour expiration
+- **Session Management** - Database-backed session tracking
+
+### 🗄️ Database Architecture
+- **Supabase PostgreSQL** - Production database with SSL encryption
+- **18 Tables** - Complete schema for news platform
+- **Role-based Access** - App, Read-only, Admin, and Audit users
+- **Connection Pooling** - Optimized for performance and security
+
+### 🚀 Production Ready
+- **Environment Configuration** - Separate dev/prod settings
+- **CORS Security** - Credential-enabled cross-origin requests
+- **Error Handling** - Comprehensive error boundaries and logging
+- **Performance** - Optimized queries and caching strategies
+
+## File Structure Highlights
+
+### Critical Configuration Files
+- [backend/.env](mdc:backend/.env) - Database and security configuration
+- [backend/package.json](mdc:backend/package.json) - Dependencies (bcryptjs, cookie-parser)
+- [vite.config.ts](mdc:vite.config.ts) - Frontend build configuration
+- [.env.local](mdc:.env.local) - Local development API endpoints
+
+### Database Schema
+- [backend/migrations/](mdc:backend/migrations/) - 11 migration files for complete schema
+- [backend/config/db.js](mdc:backend/config/db.js) - Database connection configuration
+- [backend/config/db-utils.js](mdc:backend/config/db-utils.js) - Query utilities and sanitization
+
+### Authentication Flow
+1. **Login:** [backend/routes/authRoutes.js](mdc:backend/routes/authRoutes.js) - Sets HTTP-only cookies
+2. **Middleware:** [backend/middleware/authMiddleware.js](mdc:backend/middleware/authMiddleware.js) - Validates cookies
+3. **Frontend:** [src/store/contentStore.tsx](mdc:src/store/contentStore.tsx) - Cookie-based API calls
+4. **Admin:** [src/components/pages/AdminDashboard.tsx](mdc:src/components/pages/AdminDashboard.tsx) - Admin authentication
+
+## Development Guidelines
+
+### Running the Application
+```bash
+# Backend
+cd backend && npm install && npm start
+
+# Frontend
+npm install && npm run dev
+```
+
+### Database Setup
+- **Connection:** Supabase PostgreSQL with SSL
+- **Migration:** Run `node backend/migrations/run-migration.js`
+- **Seeding:** Execute seed scripts for initial data
+
+### Security Notes
+- **No localStorage** - All tokens stored in HTTP-only cookies
+- **bcryptjs** - Use instead of bcrypt for Windows compatibility
+- **SSL Required** - All database connections use SSL encryption
+- **CORS Configured** - Credentials enabled for cookie support
+
+## Deployment Architecture
+
+### Production Environment
+- **Frontend:** Built with Vite and deployed to Hostinger
+- **Backend:** Node.js server with PM2 process management
+- **Database:** Supabase PostgreSQL with connection pooling
+- **CDN:** Static assets served from Hostinger
+
+### Environment Variables
+- [backend/.env](mdc:backend/.env) - Production database and security settings
+- [.env.production](mdc:.env.production) - Frontend production API configuration
+- [.env.local](mdc:.env.local) - Local development configuration
