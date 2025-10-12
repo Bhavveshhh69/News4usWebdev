@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import yahooFinance from 'yahoo-finance2';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -26,8 +27,14 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 4002; // Use env PORT when provided
 
-// Middleware
-app.use(cors()); // Enable CORS for all routes
+// Security middleware - CRITICAL for cookie authentication
+app.use(cookieParser()); // Parse cookies for authentication
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production'
+    ? ['https://news4us.in', 'https://www.news4us.in']
+    : ['http://localhost:3001', 'http://localhost:5173'],
+  credentials: true // Allow cookies to be sent
+}));
 app.use(express.json()); // Parse JSON bodies
 
 // Routes

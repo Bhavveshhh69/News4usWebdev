@@ -15,23 +15,23 @@ const dbConfig = {
   connectionTimeoutMillis: process.env.DB_CONNECTION_TIMEOUT || 2000, // How long to wait for a connection to be established
 };
 
-// Role-specific configurations
+// Role-specific configurations (temporarily use main user for all roles)
 const roleConfigs = {
   app_user: {
-    user: process.env.DB_APP_USER || 'app_user',
-    password: process.env.DB_APP_USER_PASSWORD || 'strong_app_password_123'
+    user: process.env.DB_USER || 'postgres.hfymcyzedgdapbtwonwt',
+    password: process.env.DB_PASSWORD || 'Bhavv@1127'
   },
   read_only_user: {
-    user: process.env.DB_READ_ONLY_USER || 'read_only_user',
-    password: process.env.DB_READ_ONLY_USER_PASSWORD || 'strong_read_password_123'
+    user: process.env.DB_USER || 'postgres.hfymcyzedgdapbtwonwt',
+    password: process.env.DB_PASSWORD || 'Bhavv@1127'
   },
   admin_user: {
-    user: process.env.DB_ADMIN_USER || 'admin_user',
-    password: process.env.DB_ADMIN_USER_PASSWORD || 'strong_admin_password_123'
+    user: process.env.DB_USER || 'postgres.hfymcyzedgdapbtwonwt',
+    password: process.env.DB_PASSWORD || 'Bhavv@1127'
   },
   audit_user: {
-    user: process.env.DB_AUDIT_USER || 'audit_user',
-    password: process.env.DB_AUDIT_USER_PASSWORD || 'strong_audit_password_123'
+    user: process.env.DB_USER || 'postgres.hfymcyzedgdapbtwonwt',
+    password: process.env.DB_PASSWORD || 'Bhavv@1127'
   }
 };
 

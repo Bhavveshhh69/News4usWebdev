@@ -4,22 +4,19 @@ import { validateToken, validateSession } from '../services/authService.js';
 // Authentication middleware
 const authenticate = async (req, res, next) => {
   try {
-    // Check for authorization header
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Check for JWT token in HTTP-only cookie
+    const token = req.cookies?.auth_token;
+    if (!token) {
       return res.status(401).json({ error: 'Authentication required' });
     }
-    
-    // Extract token
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-    
+
     // Validate token
     const tokenValidation = await validateToken(token);
-    
+
     if (!tokenValidation.success) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
-    
+
     // Attach user to request
     req.user = tokenValidation.user;
     next();
@@ -52,25 +49,22 @@ const authorize = (...allowedRoles) => {
 // Optional authentication middleware (for endpoints that can be accessed by both authenticated and unauthenticated users)
 const optionalAuth = async (req, res, next) => {
   try {
-    // Check for authorization header
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Check for JWT token in HTTP-only cookie
+    const token = req.cookies?.auth_token;
+    if (!token) {
       // No token, continue without user
       next();
       return;
     }
-    
-    // Extract token
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-    
+
     // Validate token
     const tokenValidation = await validateToken(token);
-    
+
     if (tokenValidation.success) {
       // Attach user to request
       req.user = tokenValidation.user;
     }
-    
+
     next();
   } catch (err) {
     // If token validation fails, continue without user

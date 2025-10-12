@@ -10,9 +10,10 @@ const defaultPool = new Pool({
   database: dbConfig.database,
   user: dbConfig.user,
   password: dbConfig.password,
-  ssl: dbConfig.ssl === 'true' || dbConfig.ssl === true ? true : 
-       dbConfig.ssl === 'false' || dbConfig.ssl === false ? false : 
-       dbConfig.ssl,
+  ssl: dbConfig.ssl === 'true' || dbConfig.ssl === true ?
+    { rejectUnauthorized: false } : // Accept self-signed certificates for Supabase
+    dbConfig.ssl === 'false' || dbConfig.ssl === false ? false :
+    dbConfig.ssl,
   max: dbConfig.max,
   idleTimeoutMillis: dbConfig.idleTimeoutMillis,
   connectionTimeoutMillis: dbConfig.connectionTimeoutMillis,
@@ -23,9 +24,10 @@ const appUserPool = new Pool({
   database: dbConfig.database,
   user: roleConfigs.app_user.user,
   password: roleConfigs.app_user.password,
-  ssl: dbConfig.ssl === 'true' || dbConfig.ssl === true ? true : 
-       dbConfig.ssl === 'false' || dbConfig.ssl === false ? false : 
-       dbConfig.ssl,
+  ssl: dbConfig.ssl === 'true' || dbConfig.ssl === true ?
+    { rejectUnauthorized: false } : // Accept self-signed certificates for Supabase
+    dbConfig.ssl === 'false' || dbConfig.ssl === false ? false :
+    dbConfig.ssl,
   max: dbConfig.max,
   idleTimeoutMillis: dbConfig.idleTimeoutMillis,
   connectionTimeoutMillis: dbConfig.connectionTimeoutMillis,
@@ -37,9 +39,10 @@ const readOnlyUserPool = new Pool({
   database: dbConfig.database,
   user: roleConfigs.read_only_user.user,
   password: roleConfigs.read_only_user.password,
-  ssl: dbConfig.ssl === 'true' || dbConfig.ssl === true ? true : 
-       dbConfig.ssl === 'false' || dbConfig.ssl === false ? false : 
-       dbConfig.ssl,
+  ssl: dbConfig.ssl === 'true' || dbConfig.ssl === true ?
+    { rejectUnauthorized: false } : // Accept self-signed certificates for Supabase
+    dbConfig.ssl === 'false' || dbConfig.ssl === false ? false :
+    dbConfig.ssl,
   max: dbConfig.max,
   idleTimeoutMillis: dbConfig.idleTimeoutMillis,
   connectionTimeoutMillis: dbConfig.connectionTimeoutMillis,
@@ -51,9 +54,10 @@ const adminUserPool = new Pool({
   database: dbConfig.database,
   user: roleConfigs.admin_user.user,
   password: roleConfigs.admin_user.password,
-  ssl: dbConfig.ssl === 'true' || dbConfig.ssl === true ? true : 
-       dbConfig.ssl === 'false' || dbConfig.ssl === false ? false : 
-       dbConfig.ssl,
+  ssl: dbConfig.ssl === 'true' || dbConfig.ssl === true ?
+    { rejectUnauthorized: false } : // Accept self-signed certificates for Supabase
+    dbConfig.ssl === 'false' || dbConfig.ssl === false ? false :
+    dbConfig.ssl,
   max: 5, // Limit admin connections
   idleTimeoutMillis: dbConfig.idleTimeoutMillis,
   connectionTimeoutMillis: dbConfig.connectionTimeoutMillis,
@@ -65,9 +69,10 @@ const auditUserPool = new Pool({
   database: dbConfig.database,
   user: roleConfigs.audit_user.user,
   password: roleConfigs.audit_user.password,
-  ssl: dbConfig.ssl === 'true' || dbConfig.ssl === true ? true : 
-       dbConfig.ssl === 'false' || dbConfig.ssl === false ? false : 
-       dbConfig.ssl,
+  ssl: dbConfig.ssl === 'true' || dbConfig.ssl === true ?
+    { rejectUnauthorized: false } : // Accept self-signed certificates for Supabase
+    dbConfig.ssl === 'false' || dbConfig.ssl === false ? false :
+    dbConfig.ssl,
   max: 5, // Limit audit connections
   idleTimeoutMillis: dbConfig.idleTimeoutMillis,
   connectionTimeoutMillis: dbConfig.connectionTimeoutMillis,

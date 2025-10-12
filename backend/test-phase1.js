@@ -2,7 +2,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { testConnection } from './config/database.js';
+import { testConnections } from './config/database.js';
 import databaseHealthCheck from './config/health-check.js';
 import validateEnvironment from './config/validate-env.js';
 
@@ -20,7 +20,7 @@ const runPhase1Tests = async () => {
     
     // Test 2: Database connection
     console.log('2. Testing database connection...');
-    const connectionSuccess = await testConnection();
+    const connectionSuccess = await testConnections();
     if (!connectionSuccess) {
       throw new Error('Database connection failed');
     }
