@@ -91,7 +91,9 @@ export function AdminDashboard() {
 
   useEffect(() => {
     // Check if user is authenticated via cookies
-    fetch('/api/auth/me') // New endpoint to get current user from cookie
+    fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/auth/me`, {
+      credentials: 'include' // Include cookies for HTTP-only authentication
+    })
       .then(response => {
         if (response.ok) {
           return response.json();
@@ -107,7 +109,6 @@ export function AdminDashboard() {
             name: data.user.name
           };
           setCurrentUser(adminUser);
-          localStorage.setItem('adminUser', JSON.stringify(adminUser));
         } else {
           navigate('/admin-login');
         }
@@ -119,16 +120,17 @@ export function AdminDashboard() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', {
+      await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/auth/logout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: 'current' }) // We'll need to implement session tracking
+        credentials: 'include',
+        body: JSON.stringify({ sessionId: 'current' })
       });
     } catch (error) {
       console.error('Logout error:', error);
     }
 
-    localStorage.removeItem('adminUser');
+    setCurrentUser(null);
     toast.success('Logged out successfully');
     navigate('/admin-login');
   };
