@@ -57,21 +57,32 @@ export function AdminLoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Make real API call to backend
+      const response = await fetch('https://news4us.in/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies for HTTP-only authentication
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
+      });
 
-    // Mock authentication logic
-    const user = mockAdminUsers.find(
-      u => u.email === formData.email && u.password === formData.password && u.role === formData.role
-    );
+      const data = await response.json();
 
-    if (user) {
-      toast.success(`Welcome back, ${user.name}!`);
-      // Store user session (in real app, use proper session management)
-      localStorage.setItem('adminUser', JSON.stringify(user));
-      navigate('/admin');
-    } else {
-      toast.error('Invalid credentials or role selection');
+      if (response.ok && data.success) {
+        toast.success(`Welcome back, ${data.user.name || 'Administrator'}!`);
+        // Cookies are set automatically by the backend
+        navigate('/admin');
+      } else {
+        toast.error(data.error || 'Invalid credentials');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('Network error. Please check your connection and try again.');
     }
 
     setIsLoading(false);

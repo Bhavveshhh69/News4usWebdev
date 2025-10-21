@@ -24,7 +24,7 @@ export function LiveMarketUpdates() {
     try {
       setLoading(true);
       // Use environment variable for API endpoint
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/stocks`);
+      const response = await fetch(`https://news4us.in/api/stocks`);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);

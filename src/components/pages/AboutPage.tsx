@@ -1,5 +1,6 @@
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '../ui/breadcrumb';
 import { Link } from '../Router';
+const RLink: any = Link;
 import { Users, Award, Globe, Clock, Shield, Target } from 'lucide-react';
 
 interface TeamMember {
@@ -62,13 +63,13 @@ export function AboutPage() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
       {/* Breadcrumbs */}
       <Breadcrumb className="mb-6">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/">Home</Link>
+              <RLink to="/">Home</RLink>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -90,18 +91,18 @@ export function AboutPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 text-center">
           <div>
-            <div className="text-3xl font-bold text-red-600 mb-2">2019</div>
-            <div className="text-gray-600 dark:text-gray-300">Founded</div>
+            <div className="text-2xl sm:text-3xl font-bold text-red-600 mb-2">2012</div>
+            <div className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Founded</div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-red-600 mb-2">50M+</div>
-            <div className="text-gray-600 dark:text-gray-300">Monthly Readers</div>
+            <div className="text-2xl sm:text-3xl font-bold text-red-600 mb-2">50M+</div>
+            <div className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Monthly Readers</div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-red-600 mb-2">24/7</div>
-            <div className="text-gray-600 dark:text-gray-300">Coverage</div>
+            <div className="text-2xl sm:text-3xl font-bold text-red-600 mb-2">24/7</div>
+            <div className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Coverage</div>
           </div>
         </div>
       </div>
@@ -119,7 +120,7 @@ export function AboutPage() {
       {/* Core Values */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Our Core Values</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {values.map((value, index) => (
             <div key={index} className="text-center">
               <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -135,7 +136,7 @@ export function AboutPage() {
       {/* Team Section */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 text-center">Leadership Team</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {teamMembers.map((member, index) => (
             <div key={index} className="text-center transform transition-transform duration-300 hover:scale-105">
               <div className="w-32 h-32 bg-gradient-to-br from-red-100 to-red-50 dark:from-gray-700 dark:to-gray-800 rounded-full mx-auto mb-6 flex items-center justify-center shadow-lg">

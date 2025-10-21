@@ -25,7 +25,7 @@ import youtubeRoutes from './routes/youtubeRoutes.js';
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 4002; // Use env PORT when provided
+const port = process.env.PORT || 4002; // Use env PORT when provided (shared hosting may override)
 
 // Security middleware - CRITICAL for cookie authentication
 app.use(cookieParser()); // Parse cookies for authentication
@@ -138,6 +138,16 @@ app.get('/api/stocks', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   }
+});
+
+// Health check endpoint for load balancer
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    version: '1.0.0'
+  });
 });
 
 app.listen(port, () => {

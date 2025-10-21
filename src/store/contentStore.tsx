@@ -222,8 +222,8 @@ const seedArticles: ArticleItem[] = [
 ];
 
 const STORAGE_KEY = 'contentStore_v1';
-// ✅ ROBUST: Use Vite environment variables for production-ready configuration
-const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || '/api';
+// ✅ ROBUST: Use direct domain for production-ready configuration
+const API_BASE = 'https://news4us.in/api';
 
 const ContentContext = createContext(null as any);
 

@@ -57,9 +57,9 @@ function AppLayout() {
 
   // Render the main website layout
   return (
-    <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 ${isDarkMode ? 'dark' : ''}`}>
+    <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col ${isDarkMode ? 'dark' : ''}`}>
       <ReadingProgress className="z-[60]" />
-      
+
       {/* Render header only for non-admin pages */}
       {!currentRoute.startsWith('/admin') && (
         <Header
@@ -71,86 +71,89 @@ function AppLayout() {
           navigationItems={NAVIGATION_ITEMS}
         />
       )}
-      
-      {/* Router Routes */}
-      <Route path="/" exact component={() => (
-        <HomePage 
-          isDarkMode={isDarkMode} 
-          isQuickRead={isQuickRead} 
-          setIsQuickRead={setIsQuickRead} 
-        />
-      )} />
-      
-      <Route path="/category" component={() => (
-        <CategoryPage 
-          category="News"
-          isQuickRead={isQuickRead} 
-        />
-      )} />
-      
-      <Route path="/politics" component={() => (
-        <CategoryPage 
-          category="Politics"
-          isQuickRead={isQuickRead} 
-        />
-      )} />
-      
-      <Route path="/health" component={() => (
-        <CategoryPage 
-          category="Health"
-          isQuickRead={isQuickRead} 
-        />
-      )} />
-      
-      <Route path="/sports" component={() => (
-        <CategoryPage 
-          category="Sports"
-          isQuickRead={isQuickRead} 
-        />
-      )} />
-      
-      <Route path="/entertainment" component={() => (
-        <CategoryPage 
-          category="Entertainment"
-          isQuickRead={isQuickRead} 
-        />
-      )} />
-      
-      <Route path="/article" component={() => (
-        <ArticlePage 
-          isDarkMode={isDarkMode} 
-          toggleDarkMode={toggleDarkMode} 
-        />
-      )} />
-      
-      <Route path="/about" exact component={AboutPage} />
-      <Route path="/e-paper" exact component={EPaperPage} />
-      <Route path="/auth" exact component={AuthPage} />
-      
-      {/* Admin Routes */}
-      <Route path="/admin-login" exact component={AdminLoginPage} />
-      <Route path="/admin" exact component={AdminDashboard} />
-      
-      {/* Test Page Route */}
-      <Route path="/test" exact component={TestPage} />
-      
-      {/* 404 Error Page - Default route */}
-      <Route path="/404" exact component={() => <ErrorPage />} />
+
+      {/* Main Content Area - Flexible container for all pages */}
+      <main className="flex-1 min-h-0">
+        {/* Router Routes */}
+        <Route path="/" exact component={() => (
+          <HomePage
+            isDarkMode={isDarkMode}
+            isQuickRead={isQuickRead}
+            setIsQuickRead={setIsQuickRead}
+          />
+        )} />
+
+        <Route path="/category" component={() => (
+          <CategoryPage
+            category="News"
+            isQuickRead={isQuickRead}
+          />
+        )} />
+
+        <Route path="/politics" component={() => (
+          <CategoryPage
+            category="Politics"
+            isQuickRead={isQuickRead}
+          />
+        )} />
+
+        <Route path="/health" component={() => (
+          <CategoryPage
+            category="Health"
+            isQuickRead={isQuickRead}
+          />
+        )} />
+
+        <Route path="/sports" component={() => (
+          <CategoryPage
+            category="Sports"
+            isQuickRead={isQuickRead}
+          />
+        )} />
+
+        <Route path="/entertainment" component={() => (
+          <CategoryPage
+            category="Entertainment"
+            isQuickRead={isQuickRead}
+          />
+        )} />
+
+        <Route path="/article" component={() => (
+          <ArticlePage
+            isDarkMode={isDarkMode}
+            toggleDarkMode={toggleDarkMode}
+          />
+        )} />
+
+        <Route path="/about" exact component={AboutPage} />
+        <Route path="/e-paper" exact component={EPaperPage} />
+        <Route path="/auth" exact component={AuthPage} />
+
+        {/* Admin Routes */}
+        <Route path="/admin-login" exact component={AdminLoginPage} />
+        <Route path="/admin" exact component={AdminDashboard} />
+
+        {/* Test Page Route */}
+        <Route path="/test" exact component={TestPage} />
+
+        {/* 404 Error Page - Default route */}
+        <Route path="/404" exact component={() => <ErrorPage />} />
+      </main>
 
       {!currentRoute.startsWith('/admin') && (
         <>
           <Footer />
           <LiveVideoFloat />
           <BackToTop />
-          
+
           {/* Floating Social Share */}
-          <SocialShare 
+          <SocialShare
             variant="floating"
             className="hidden xl:block"
           />
         </>
       )}
-      
+
       <Toaster />
     </div>
   );

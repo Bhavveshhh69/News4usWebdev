@@ -91,7 +91,7 @@ export function AdminDashboard() {
 
   useEffect(() => {
     // Check if user is authenticated via cookies
-    fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/auth/me`, {
+    fetch(`https://news4us.in/api/auth/me`, {
       credentials: 'include' // Include cookies for HTTP-only authentication
     })
       .then(response => {
@@ -120,7 +120,7 @@ export function AdminDashboard() {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/auth/logout`, {
+      await fetch(`https://news4us.in/api/auth/logout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
