@@ -1,34 +1,33 @@
+import React from 'react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '../ui/breadcrumb';
 import { Link } from '../Router';
-const RLink: any = Link;
 import { Users, Award, Globe, Clock, Shield, Target } from 'lucide-react';
 
-interface TeamMember {
-  name: string;
-  role: string;
-  experience: string;
-  specialty?: string;
-}
-
 export function AboutPage() {
-  const teamMembers: TeamMember[] = [
+  const teamMembers = [
     {
-      name: "Dr BM Sivaprasad",
-      role: "CEO & Editor-in-Chief",
-      experience: "Ph.D in Journalism, MJMC, MBA",
-      specialty: ""
+      name: "Sarah Martinez",
+      role: "Editor-in-Chief",
+      experience: "15 years in journalism",
+      specialty: "Investigative Reporting"
     },
     {
-      name: "BT Vijay Kumar",
-      role: "Senior Andhra Correspondent",
-      experience: "LLB, M.A",
+      name: "Michael Chen",
+      role: "Senior Political Correspondent",
+      experience: "12 years covering politics",
       specialty: "Government Affairs"
     },
     {
-      name: "S Bhavesh",
-      role: "Lead Developer",
-      experience: "B.Tech-[ARTIFICIAL INTELLIGENCE AND DATA SCIENCE]",
-      specialty: ""
+      name: "Dr. Emily Rodriguez",
+      role: "Health & Science Editor",
+      experience: "10 years medical journalism",
+      specialty: "Healthcare Policy"
+    },
+    {
+      name: "James Thompson",
+      role: "Sports Director",
+      experience: "8 years sports coverage",
+      specialty: "International Sports"
     }
   ];
 
@@ -63,13 +62,13 @@ export function AboutPage() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+    <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Breadcrumbs */}
       <Breadcrumb className="mb-6">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <RLink to="/">Home</RLink>
+              <Link to="/">Home</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -91,18 +90,18 @@ export function AboutPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 text-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
           <div>
-            <div className="text-2xl sm:text-3xl font-bold text-red-600 mb-2">2012</div>
-            <div className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Founded</div>
+            <div className="text-3xl font-bold text-red-600 mb-2">2019</div>
+            <div className="text-gray-600 dark:text-gray-300">Founded</div>
           </div>
           <div>
-            <div className="text-2xl sm:text-3xl font-bold text-red-600 mb-2">50M+</div>
-            <div className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Monthly Readers</div>
+            <div className="text-3xl font-bold text-red-600 mb-2">50M+</div>
+            <div className="text-gray-600 dark:text-gray-300">Monthly Readers</div>
           </div>
           <div>
-            <div className="text-2xl sm:text-3xl font-bold text-red-600 mb-2">24/7</div>
-            <div className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Coverage</div>
+            <div className="text-3xl font-bold text-red-600 mb-2">24/7</div>
+            <div className="text-gray-600 dark:text-gray-300">Coverage</div>
           </div>
         </div>
       </div>
@@ -112,7 +111,7 @@ export function AboutPage() {
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Our Mission</h2>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-4xl mx-auto leading-relaxed">
-            News4us Channel gives you Latest and Updated Exclusive updates on Andhra Pradesh & Telangana News. Our site gives you Updated info on Telugu States Politics. Delivering all Latest News including Breaking News, Regional News, National and International News, Sports Updates, Entertainment, Business, Political, Crime, Movie Related news, Fashion Trends & Devotional Programs. Trades, stock market live updates and cricket live score updates exclusive.
+            At NEWS4US, we are committed to delivering truth through journalism. Our mission is to inform, educate, and empower our readers with accurate, comprehensive, and timely news coverage that helps them make informed decisions about their lives and communities.
           </p>
         </div>
       </div>
@@ -120,7 +119,7 @@ export function AboutPage() {
       {/* Core Values */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Our Core Values</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {values.map((value, index) => (
             <div key={index} className="text-center">
               <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -135,23 +134,17 @@ export function AboutPage() {
 
       {/* Team Section */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 text-center">Leadership Team</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Leadership Team</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {teamMembers.map((member, index) => (
-            <div key={index} className="text-center transform transition-transform duration-300 hover:scale-105">
-              <div className="w-32 h-32 bg-gradient-to-br from-red-100 to-red-50 dark:from-gray-700 dark:to-gray-800 rounded-full mx-auto mb-6 flex items-center justify-center shadow-lg">
-                <Users className="w-16 h-16 text-red-600 dark:text-red-400" />
+            <div key={index} className="text-center">
+              <div className="w-24 h-24 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <Users className="w-12 h-12 text-gray-500 dark:text-gray-400" />
               </div>
-              <div className="space-y-2">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">{member.name}</h3>
-                <p className="text-lg text-red-600 dark:text-red-400 font-medium">{member.role}</p>
-                {member.experience && (
-                  <p className="text-sm text-gray-600 dark:text-gray-300">{member.experience}</p>
-                )}
-                {member.specialty && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 italic">{member.specialty}</p>
-                )}
-              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{member.name}</h3>
+              <p className="text-red-600 dark:text-red-400 font-medium mb-2">{member.role}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">{member.experience}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{member.specialty}</p>
             </div>
           ))}
         </div>
@@ -173,10 +166,22 @@ export function AboutPage() {
       {/* Contact Information */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Get In Touch</h2>
-        <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-300">newsforus.in@gmail.com</p>
-          <p className="text-gray-600 dark:text-gray-300">+91 90547 12345</p>
-          <p className="text-gray-600 dark:text-gray-300">+91 90597 88886</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Editorial</h3>
+            <p className="text-gray-600 dark:text-gray-300">editorial@news4us.com</p>
+            <p className="text-gray-600 dark:text-gray-300">+1 (555) 123-4567</p>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Advertising</h3>
+            <p className="text-gray-600 dark:text-gray-300">ads@news4us.com</p>
+            <p className="text-gray-600 dark:text-gray-300">+1 (555) 123-4568</p>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Support</h3>
+            <p className="text-gray-600 dark:text-gray-300">support@news4us.com</p>
+            <p className="text-gray-600 dark:text-gray-300">+1 (555) 123-4569</p>
+          </div>
         </div>
       </div>
     </div>

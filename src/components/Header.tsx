@@ -28,7 +28,7 @@ export function Header({
   return (
     <header className="bg-white dark:bg-gray-900 shadow-lg relative z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between py-4 md:py-6 lg:py-8 xl:py-10 gap-2 md:gap-4 lg:gap-6 xl:gap-8">
+        <div className="flex items-center justify-between py-6 md:py-8 lg:py-10 xl:py-12 gap-4 lg:gap-7 xl:gap-8 lg:grid lg:grid-cols-3">
           {/* Left: Logo Section */}
           <div className="flex items-center space-x-4 md:space-x-5 lg:space-x-6 xl:space-x-7 justify-start min-w-0">
             <img
@@ -111,8 +111,8 @@ export function Header({
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="lg:hidden absolute top-full left-0 right-0 z-50">
-            <div className="px-4 pt-4 pb-5 space-y-2 sm:px-5 dark:bg-gray-900 border-t dark:border-gray-700 shadow-lg">
+          <div className="lg:hidden">
+            <div className="px-4 pt-4 pb-5 space-y-2 sm:px-5 bg-white dark:bg-gray-900 border-t dark:border-gray-700">
               {navigationItems.map((item) => (
                 <RLink
                   key={item.name}
